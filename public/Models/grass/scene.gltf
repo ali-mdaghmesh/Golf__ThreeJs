@@ -1,0 +1,234 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 569,
+      "max": [
+        27.29110336303711,
+        57.78484344482422,
+        28.11766815185547
+      ],
+      "min": [
+        -42.256683349609375,
+        -2.207508087158203,
+        -23.791597366333008
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 6828,
+      "componentType": 5126,
+      "count": 569,
+      "max": [
+        0.876664936542511,
+        0.6136592626571655,
+        0.9737664461135864
+      ],
+      "min": [
+        -0.8206837773323059,
+        -4.440892098500626e-16,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 569,
+      "max": [
+        1.0,
+        1.0
+      ],
+      "min": [
+        0.0,
+        0.0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 4224,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "AgultoDesigns (https://sketchfab.com/AgultoDesigns)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/grass-free-to-use-6762d57132694011a56b502b23072940",
+      "title": "Grass (free to use)"
+    },
+    "generator": "Sketchfab-12.68.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 16896,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4552,
+      "byteOffset": 16896,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 13656,
+      "byteOffset": 21448,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 35104,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/grass_baseColor.png"
+    }
+  ],
+  "materials": [
+    {
+      "alphaMode": "BLEND",
+      "doubleSided": true,
+      "name": "grass",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.0787,
+          0.1955,
+          0.0101,
+          1.0
+        ],
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.6
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "pPlane12_grass_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "ec42d7d5049e47988dbd902a9e8fdebd.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "name": "group1"
+    },
+    {
+      "children": [
+        5
+      ],
+      "name": "pPlane12"
+    },
+    {
+      "mesh": 0,
+      "name": "pPlane12_grass_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    }
+  ]
+}

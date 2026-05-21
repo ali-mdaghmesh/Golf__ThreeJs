@@ -1,0 +1,11 @@
+Model Information:
+* title:	18th hole, Old Course, St Andrews Links
+* source:	https://sketchfab.com/3d-models/18th-hole-old-course-st-andrews-links-6b699b69b30b4e169aa911c78cd80bd1
+* author:	Michaels 3D Stuff (https://sketchfab.com/Michaels3dstuff)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "18th hole, Old Course, St Andrews Links" (https://sketchfab.com/3d-models/18th-hole-old-course-st-andrews-links-6b699b69b30b4e169aa911c78cd80bd1) by Michaels 3D Stuff (https://sketchfab.com/Michaels3dstuff) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

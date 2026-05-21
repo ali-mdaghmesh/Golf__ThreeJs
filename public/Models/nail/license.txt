@@ -1,0 +1,11 @@
+Model Information:
+* title:	golf_tee
+* source:	https://sketchfab.com/3d-models/golf-tee-0313ea552b36479ca08336a907742168
+* author:	mikethornley (https://sketchfab.com/mikethornley)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "golf_tee" (https://sketchfab.com/3d-models/golf-tee-0313ea552b36479ca08336a907742168) by mikethornley (https://sketchfab.com/mikethornley) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

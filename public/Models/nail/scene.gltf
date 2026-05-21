@@ -1,0 +1,239 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2615,
+      "max": [
+        120.65882873535156,
+        120.65872955322266,
+        965.9578857421875
+      ],
+      "min": [
+        -120.65872955322266,
+        -120.65884399414063,
+        -222.70001220703125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 31380,
+      "componentType": 5126,
+      "count": 2615,
+      "max": [
+        0.9998177289962769,
+        0.9998177289962769,
+        1.0
+      ],
+      "min": [
+        -0.9998177289962769,
+        -0.9998177289962769,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2615,
+      "max": [
+        0.43921300768852234,
+        0.9839112758636475
+      ],
+      "min": [
+        0.03949243575334549,
+        0.02388305589556694
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 20920,
+      "componentType": 5126,
+      "count": 2615,
+      "max": [
+        0.43921300768852234,
+        0.9839112758636475
+      ],
+      "min": [
+        0.03949243575334549,
+        0.02388305589556694
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 14760,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "mikethornley (https://sketchfab.com/mikethornley)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/golf-tee-0313ea552b36479ca08336a907742168",
+      "title": "golf_tee"
+    },
+    "generator": "Sketchfab-13.4.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 59040,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 41840,
+      "byteOffset": 59040,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 62760,
+      "byteOffset": 100880,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 163640,
+      "uri": "scene.bin"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "01_-_Default",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.588235,
+          0.588235,
+          0.588235,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8929713596497552
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Cylinder01_01 - Default_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TEXCOORD_0": 2,
+            "TEXCOORD_1": 3
+          },
+          "indices": 4,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.02539999969303608,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02539999969303608,
+        0.0,
+        0.0,
+        -0.02539999969303608,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "05ead7ab1d7c46088f9d641987cf1e01.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4
+      ],
+      "matrix": [
+        1.515444040298462,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        3.364961732140652e-16,
+        -1.515444040298462,
+        0.0,
+        0.0,
+        1.515444040298462,
+        3.364961732140652e-16,
+        0.0,
+        -332.13043212890625,
+        -575.8389892578125,
+        17.932100296020508,
+        1.0
+      ],
+      "name": "Cylinder01"
+    },
+    {
+      "mesh": 0,
+      "name": "Cylinder01_01 - Default_0"
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}

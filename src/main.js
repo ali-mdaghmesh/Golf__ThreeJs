@@ -1,107 +1,140 @@
 import * as THREE from 'three';
-import { Controller } from './Controller/Controller.js';
+import { FlyController } from './Controller/FlyController.js';
 import { GolfCourse } from './GolfCourse.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
-
+import { GolfGame } from './game/GolfGame.js';
+import { Dashboard } from './ui/Dashboard.js';
+import { InstructionsPanel } from './ui/InstructionsPanel.js';
+import { setupScene } from './game/SceneSetup.js';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
 
+const camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    400
+);
 
-const courseAmbientLight = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(courseAmbientLight);
-
-const light = new THREE.DirectionalLight(0xffffff, 1.2);
-light.position.set(10, 20, 10);
-light.castShadow = true;
-
-light.shadow.camera.left = -100;
-light.shadow.camera.right = 100;
-light.shadow.camera.top = 100;
-light.shadow.camera.bottom = -100;
-
-scene.add(light);
-
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100000);
-camera.position.set(0,4,60);
-
-
+const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+app.appendChild(renderer.domElement);
 
+setupScene(scene, renderer);
 
-const controller = new Controller(camera, renderer.domElement, 0.2);
-const clock = new THREE.Clock();
+const flyController = new FlyController(camera, renderer.domElement, 16);
+flyController.attach();
 
-const gltfLoader = new GLTFLoader();
+const timer = new THREE.Timer();
 
 let course = null;
+let game = null;
+let dashboard = null;
 
-async function initCourse() {
+function setCanvasPointerEvents(mode) {
+    renderer.domElement.style.pointerEvents = mode === 'free' ? 'auto' : 'none';
+}
+
+async function init() {
     course = new GolfCourse(scene, {
         width: 200,
         depth: 200,
-        segments : 150,
-        maxHeight: 5,
-        textureRepeat : 15,
-        grassTexturePath : './Textures/download.jpg',
-        fairwayTexturePath : './Textures/download.jpg',
-        greenTexturePath : './Textures/download.jpg',
-        grassCount : 1000,
-        holeCount : 1,
+        segments: 128,
+        maxHeight: 2.8,
+        textureRepeat: 14,
+        grassCount: 1800,
+        holeCount: 1,
+        showBunkers: true,
+        showWater: true,
     });
 
     await course.init();
 
-    loadModels();
+    dashboard = new Dashboard({
+        onBeginCharge: () => game?.beginCharge(),
+        onReleaseCharge: () => game?.releaseCharge(),
+        onCancelCharge: () => game?.cancelCharge(),
+        onReset: () => {
+            document.getElementById('hud-win')?.classList.remove('show');
+            game?.resetBall();
+        },
+        onBallType: (d) => game?.setBallType(d),
+        onCameraMode: (m) => {
+            game?.setCameraMode(m);
+            setCanvasPointerEvents(m);
+        },
+        onTrail: (e) => game?.setTrail(e),
+        onFollowBall: (e) => game?.setFollowBall(e),
+        onParamsChange: () => game?.onDashboardChange(),
+    });
+
+    new InstructionsPanel();
+
+    game = new GolfGame({
+        scene,
+        camera,
+        course,
+        dashboard,
+        flyController,
+    });
+    await game.init();
+
+    setCanvasPointerEvents('follow');
+    bindKeyboard();
 }
 
-function loadModels() {
-    gltfLoader.load('./Models/hole/scene.gltf', (gltf) => {
-        const model = gltf.scene;
-        model.position.set(0,0.1 ,36.1);
-        model.scale.setScalar(0.2);
-        scene.add(model);
+function bindKeyboard() {
+    window.addEventListener('keydown', (e) => {
+        if (e.target.matches('input, select, textarea, button')) return;
+
+        if (e.code === 'Space') {
+            if (e.repeat) return;
+            e.preventDefault();
+            game?.beginChargeFromKeyboard();
+        }
+        if (e.key === 'r' || e.key === 'R') {
+            game?.resetBall();
+            document.getElementById('hud-win')?.classList.remove('show');
+        }
     });
 
-    gltfLoader.load('./Models/bat/scene.gltf', (gltf) => {
-        const model = gltf.scene;
-        model.position.set(1, 1,52 );
-        model.scale.setScalar(0.8);
-        model.rotation.y -=2;
-        scene.add(model);
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            game?.releaseChargeFromKeyboard();
+        }
     });
 
-    gltfLoader.load('./Models/nail/scene.gltf', (gltf) => {
-        const model = gltf.scene;
-        model.position.set(0, course.getHeightAt(0, 50), 50);
-        model.scale.setScalar(0.02);
-        scene.add(model);
+    window.addEventListener('blur', () => {
+        game?.cancelCharge();
     });
 
-    gltfLoader.load('./Models/ball/scene.gltf', (gltf) => {
-        const model = gltf.scene;
-        model.position.set(0.2, 0.4, 50);
-        model.scale.setScalar(0.004);
-        scene.add(model);
+    window.addEventListener('pointerup', () => {
+        game?.releaseCharge();
     });
 }
 
-initCourse();
+init();
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
 });
 
 function animate() {
     requestAnimationFrame(animate);
-    controller.update();
+    timer.update();
+    const dt = Math.min(timer.getDelta(), 0.05);
+    const elapsed = timer.getElapsed();
+
+    if (course) course.update(elapsed);
+    if (game) {
+        const fc = game.cameraMode === 'free' ? flyController : null;
+        game.update(dt, fc);
+    }
+
     renderer.render(scene, camera);
 }
 

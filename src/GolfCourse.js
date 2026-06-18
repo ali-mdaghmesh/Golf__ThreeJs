@@ -5,6 +5,7 @@
  */
 
 import * as THREE from 'three';
+import { createProceduralGrassTexture } from './game/ProceduralGroundTexture.js';
 
 export const ZONE = Object.freeze({
     TEE     : 'tee',
@@ -157,6 +158,24 @@ export class GolfCourse {
     }
 
     getHeightAt(x, z) { return this._sampleHeight(x, z); }
+
+    /** موضع الحفرة الأولى (مطابق منطق GolfGame) */
+    getHolePosition() {
+        const hole = this.holes[0];
+        if (!hole) return { x: 0, y: 0, z: 0 };
+        const { x, z } = hole.holePos;
+        return { x, y: this.getHeightAt(x, z), z };
+    }
+
+    /** موضع الإرسال للحفرة الأولى */
+    getTeePosition() {
+        const hole = this.holes[0];
+        if (!hole) return { x: 0, z: -41 };
+        return {
+            x: hole.teePos.x,
+            z: hole.teePos.z - 5,
+        };
+    }
 
     getNormalAt(x, z, eps = 0.4) {
         const h0 = this._sampleHeight(x, z);
@@ -354,36 +373,17 @@ export class GolfCourse {
                 // No vertexColors — keeps texture uniform across the whole terrain
             });
         } else {
-            // No texture: use vertex colors to show fairway/green zones
-            const colors = new Float32Array(pos.count * 3);
-            for (let i = 0; i < pos.count; i++) {
-                const px = pos.getX(i), pz = pos.getZ(i);
-                const nx = px / width + 0.5;
-                const nz = pz / depth + 0.5;
-                let maxFair = 0, maxGreen = 0;
-                for (const hole of this.holes) {
-                    maxFair  = Math.max(maxFair,  this._fairwayMask(nx, nz, hole));
-                    maxGreen = Math.max(maxGreen, this._greenMaskNorm(nx, nz, hole));
-                }
-                // Rough: dark green
-                let r = 0.14, g = 0.30, b = 0.10;
-                // Fairway: medium green
-                r = THREE.MathUtils.lerp(r, 0.20, maxFair);
-                g = THREE.MathUtils.lerp(g, 0.48, maxFair);
-                b = THREE.MathUtils.lerp(b, 0.14, maxFair);
-                // Green: bright green
-                r = THREE.MathUtils.lerp(r, 0.18, maxGreen);
-                g = THREE.MathUtils.lerp(g, 0.60, maxGreen);
-                b = THREE.MathUtils.lerp(b, 0.16, maxGreen);
-                colors[i * 3]     = r;
-                colors[i * 3 + 1] = g;
-                colors[i * 3 + 2] = b;
-            }
-            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            // No external textures: generate a realistic procedural grass texture
+            const grassTex = createProceduralGrassTexture({
+                size: 1024,
+                seed: this.opt.noiseSeed ?? 1337,
+                repeat: this.opt.textureRepeat ?? 14,
+            });
+
             mat = new THREE.MeshStandardMaterial({
-                vertexColors: true,
-                roughness   : 0.88,
-                metalness   : 0.0,
+                map: grassTex,
+                roughness: 0.95,
+                metalness: 0.0,
             });
         }
 
@@ -443,7 +443,7 @@ export class GolfCourse {
             });
         } else {
             mat = new THREE.MeshStandardMaterial({
-                color             : 0x3a7a20,
+                color             : 0x4a9a32,
                 roughness         : 0.82,
                 metalness         : 0.0,
                 transparent       : true,

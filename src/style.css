@@ -1,8 +1,373 @@
- * {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-      canvas {
-        display: block;
-      }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#app canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
+}
+
+#ui-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+#ui-layer button,
+#ui-layer .panel,
+#ui-layer select,
+#ui-layer input,
+#ui-layer label,
+#ui-layer .backdrop {
+  pointer-events: auto;
+}
+
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(180deg, rgba(8, 28, 18, 0.92), rgba(8, 28, 18, 0.55));
+  color: #e8f5e9;
+  pointer-events: none;
+}
+
+#top-bar h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+#hud-zone,
+#hud-distance {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+#hud-win {
+  display: none;
+  padding: 0.25rem 0.75rem;
+  background: #2e7d32;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+#hud-win.show {
+  display: block;
+}
+
+.fab {
+  position: fixed;
+  z-index: 300;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2e7d32, #1b5e20);
+  color: #fff;
+  font-size: 1.35rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s, background 0.15s;
+  pointer-events: auto;
+}
+
+.fab:hover {
+  transform: scale(1.08);
+}
+
+#btn-dashboard {
+  bottom: 4.5rem;
+  right: 1rem;
+  left: auto;
+}
+
+.fab-help {
+  bottom: 1rem;
+  right: 1rem;
+  left: auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.panel {
+  position: fixed;
+  z-index: 250;
+  background: rgba(10, 30, 20, 0.97);
+  color: #e8f5e9;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  max-height: 88vh;
+  overflow-y: auto;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(1.5rem);
+  transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+  pointer-events: none;
+}
+
+.panel.open {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+#dashboard {
+  top: 3.5rem;
+  right: 1rem;
+  left: auto;
+  width: min(380px, calc(100vw - 2rem));
+  padding-bottom: 1rem;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.panel-head h2 {
+  font-size: 1.05rem;
+}
+
+.panel-head button {
+  background: transparent;
+  border: none;
+  color: #a5d6a7;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+}
+
+.panel-section {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.panel-section h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #81c784;
+  margin-bottom: 0.6rem;
+}
+
+.panel-section label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.55rem;
+}
+
+.panel-section label span {
+  float: left;
+  color: #a5d6a7;
+}
+
+.panel-section input[type='range'] {
+  width: 100%;
+  margin-top: 0.35rem;
+  accent-color: #66bb6a;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.check input {
+  accent-color: #66bb6a;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-primary,
+.btn-secondary,
+.preset-grid button {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #43a047;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #66bb6a;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8f5e9;
+}
+
+.btn-link {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.45rem;
+  background: transparent;
+  border: 1px dashed rgba(129, 199, 132, 0.45);
+  border-radius: 8px;
+  color: #a5d6a7;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-link:hover {
+  background: rgba(67, 160, 71, 0.15);
+  color: #e8f5e9;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.preset-grid button {
+  background: rgba(67, 160, 71, 0.25);
+  color: #c8e6c9;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+.preset-grid button:hover {
+  background: rgba(67, 160, 71, 0.45);
+}
+
+#camera-mode {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.4rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #e8f5e9;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.stats div {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+}
+
+.stats span {
+  display: block;
+  color: #81c784;
+  font-size: 0.7rem;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s, visibility 0.25s;
+}
+
+.backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.instructions {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: min(440px, calc(100vw - 2rem));
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+.instructions.open {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.instructions-list {
+  list-style: none;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.instructions-list li {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-bottom: 0.65rem;
+}
+
+.instructions-list kbd {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: rgba(67, 160, 71, 0.35);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+#hint-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  text-align: center;
+  padding: 0.45rem;
+  font-size: 0.75rem;
+  color: rgba(232, 245, 233, 0.75);
+  background: rgba(8, 28, 18, 0.65);
+  pointer-events: none;
+}

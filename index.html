@@ -1,12 +1,136 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <title>golf</title>
-    <link rel="stylesheet" href="/src/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>محاكاة غولف — فيزياء ثلاثية الأبعاد</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="src/main.js"></script>
+
+    <div id="ui-layer">
+    <!-- شريط علوي -->
+    <header id="top-bar">
+      <h1>غولف ثلاثي الأبعاد</h1>
+      <div id="hud-zone">—</div>
+      <div id="hud-distance">—</div>
+      <div id="hud-win">⛳ دخلت الحفرة!</div>
+    </header>
+
+    <!-- أزرار عائمة -->
+    <button type="button" id="btn-dashboard" class="fab" title="لوحة التحكم">⚙</button>
+    <button type="button" id="btn-help" class="fab fab-help" title="التعليمات">؟</button>
+
+    <div id="dashboard-backdrop" class="backdrop"></div>
+
+    <!-- لوحة التحكم -->
+    <aside id="dashboard" class="panel">
+      <header class="panel-head">
+        <h2>لوحة التحكم</h2>
+        <button type="button" id="dashboard-close" aria-label="إغلاق">×</button>
+      </header>
+
+      <section class="panel-section">
+        <h3>الضربة</h3>
+        <label>السرعة الابتدائية v₀ (م/ث) <span id="param-v0-val">23</span>
+          <input type="range" id="param-v0" min="15" max="85" step="0.5" value="23" />
+        </label>
+        <label>زاوية الانطلاق θ (°) <span id="param-theta-val">8.1</span>
+          <input type="range" id="param-theta" min="5" max="25" step="0.05" value="8.1" />
+        </label>
+        <label>انحراف جانبي vx₀ (م/ث) <span id="param-vz0-val">0</span>
+          <input type="range" id="param-vz0" min="-10" max="10" step="0.5" value="0" />
+        </label>
+        <label>ωx (راد/ث) <span id="param-omegax-val">0</span>
+          <input type="range" id="param-omegax" min="-60" max="60" step="5" value="0" />
+        </label>
+        <label>ωy جانبي (راد/ث) <span id="param-omegay-val">0</span>
+          <input type="range" id="param-omegay" min="-90" max="90" step="5" value="0" />
+        </label>
+        <label>ωz خلفي (راد/ث) <span id="param-omegaz-val">91.5</span>
+          <input type="range" id="param-omegaz" min="0" max="200" step="0.5" value="91.5" />
+        </label>
+        <label>موضع الإرسال X <span id="param-startX-val">0</span>
+          <input type="range" id="param-startX" min="-40" max="40" step="1" value="0" />
+        </label>
+        <label>موضع الإرسال Z <span id="param-startZ-val">-41</span>
+          <input type="range" id="param-startZ" min="-95" max="95" step="1" value="-41" />
+        </label>
+        <label>زاوية التصويب (°) <span id="param-aim-yaw-val">0</span>
+          <input type="range" id="param-aim-yaw" min="-180" max="180" step="1" value="0" title="0° = نحو الحفرة" />
+        </label>
+        <label>زاوية الكاميرا (°) <span id="param-view-yaw-val">0</span>
+          <input type="range" id="param-view-yaw" min="-180" max="180" step="1" value="0" />
+        </label>
+        <div class="btn-row">
+          <button type="button" id="btn-shoot" class="btn-primary" title="اضغط مع الاستمرار ثم ارفع">إطلاق الكرة (اضغط مع الاستمرار)</button>
+          <button type="button" id="btn-reset" class="btn-secondary">إعادة ضبط</button>
+        </div>
+        <button type="button" id="btn-restore-defaults" class="btn-link">↩ استعادة الضربة الافتراضية (دخول الحفرة)</button>
+      </section>
+
+      <section class="panel-section">
+        <h3>نوع الكرة</h3>
+        <label class="check"><input type="checkbox" id="ball-dimpled" checked /> ذات تجاويف (Cd≈0.25)</label>
+        <label class="check"><input type="checkbox" id="ball-smooth" /> ملساء (Cd≈0.5)</label>
+      </section>
+
+      <section class="panel-section">
+        <h3>سيناريوهات (الدراسة)</h3>
+        <div class="preset-grid">
+          <button type="button" data-preset="standard">قياسي</button>
+          <button type="button" data-preset="low">زاوية منخفضة</button>
+          <button type="button" data-preset="high">زاوية عالية</button>
+          <button type="button" data-preset="draw">ملتفة يمين</button>
+          <button type="button" data-preset="fade">ملتفة يسار</button>
+          <button type="button" data-preset="flop">فلوب</button>
+          <button type="button" data-preset="short">قصيرة</button>
+          <button type="button" data-preset="smooth">كرة ملساء</button>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h3>العرض والكاميرا</h3>
+        <label class="check"><input type="checkbox" id="opt-trail" checked /> مسار الكرة</label>
+        <label class="check"><input type="checkbox" id="opt-follow" checked /> متابعة الكرة</label>
+        <label>وضع الكاميرا
+          <select id="camera-mode">
+            <option value="follow">متابعة</option>
+            <option value="orbit">دوران</option>
+            <option value="free">حرّ (WASD)</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="panel-section stats" id="stats-readout"></section>
+    </aside>
+
+    <!-- التعليمات -->
+    <div id="instructions-backdrop" class="backdrop"></div>
+    <div id="instructions-panel" class="panel instructions">
+      <header class="panel-head">
+        <h2>التعليمات</h2>
+        <button type="button" id="instructions-close" aria-label="إغلاق">×</button>
+      </header>
+      <ul class="instructions-list">
+        <li><kbd>⚙</kbd> اضغط زر الإعدادات لفتح <strong>لوحة التحكم</strong> وتعديل السرعة، الزوايا، والدوران.</li>
+        <li>الخط المنقط يظهر دائماً قبل الضرب حسب قيم اللوحة، ويختفي أثناء الطيران ثم يعود بعد التوقف.</li>
+        <li><kbd>Space</kbd> أو زر الإطلاق: سحب العصا للخلف ثم الإفلات للضرب — <strong>لا يغيّر سرعة الكرة</strong> (السرعة من اللوحة فقط).</li>
+        <li>زاوية التصويب والكاميرا في اللوحة لتجربة 360° حول الكرة بعد تفويت الحفرة.</li>
+        <li>بعد كل ضربة تبقى الكرة في مكان توقّفها — يمكنك الضرب مجدداً من نفس الموضع.</li>
+        <li><kbd>إعادة ضبط</kbd> أو <kbd>R</kbd> لإرجاع الكرة لنقطة الإرسال فقط.</li>
+        <li>اختر <strong>كرة ذات تجاويف</strong> أو <strong>ملساء</strong> لمقارنة السحب والرفع (ماغنوس).</li>
+        <li>استخدم <strong>السيناريوهات</strong> لتجربة حالات الدراسة (زاوية، Draw/Fade، فلوب).</li>
+        <li>وضع الكاميرا <strong>حرّ</strong>: انقر على المشهد لقفل المؤشر، ثم <kbd>W A S D</kbd> للتحرك، <kbd>Q</kbd> للأسفل و <kbd>E</kbd> للأعلى، حرّك الفأرة للنظر.</li>
+        <li>الكرة محصورة داخل حدود الملعب ولا يمكنها النزول تحت الأرض.</li>
+        <li>الفيزياء: وزن، مقاومة هواء، ماغنوس، احتكاك، ارتداد — تكامل أويلر 0.001 ث.</li>
+      </ul>
+    </div>
+
+    <footer id="hint-bar">Space (اضغط مع الاستمرار): ضرب · R: إعادة للبداية · ⚙ لوحة · ؟ تعليمات</footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

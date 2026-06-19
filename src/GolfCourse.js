@@ -220,7 +220,7 @@ export class GolfCourse {
             }
         }
         for (const flag of this._flagMeshes) {
-            flag.rotation.z = Math.sin(elapsedTime * 3.1 + flag.userData.phase) * 0.18;
+            flag.rotation.y = Math.sin(elapsedTime * 3.1 + flag.userData.phase) * 0.18;
         }
     }
 

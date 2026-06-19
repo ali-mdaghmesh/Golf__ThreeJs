@@ -30,19 +30,6 @@ export class BallRenderer {
         this.mesh.receiveShadow = true;
         this.group.add(this.mesh);
 
-        this.shadowBlob = new THREE.Mesh(
-            new THREE.CircleGeometry(this.renderRadius * 1.8, 24),
-            new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.25,
-                depthWrite: false,
-            })
-        );
-        this.shadowBlob.rotation.x = -Math.PI / 2;
-        this.shadowBlob.position.y = -this.renderRadius + 0.002;
-        this.group.add(this.shadowBlob);
-
         this.trailMax = 120;
         this.trailPoints = [];
         this.trailLine = null;
@@ -100,12 +87,6 @@ export class BallRenderer {
         this._spinAngle.y += physics.omegay * dt;
         this._spinAngle.z += physics.omegaz * dt;
         this.mesh.rotation.copy(this._spinAngle);
-
-        const shadowBase = onTee && teeTopY != null ? teeTopY : groundY;
-        const h = Math.max(0, visualY - shadowBase - this.renderRadius);
-        const scale = 1 + Math.min(2, h * 0.45);
-        this.shadowBlob.scale.setScalar(scale);
-        this.shadowBlob.material.opacity = 0.28 / scale;
 
         if (showTrail && !physics.stopped) {
             const now = performance.now();

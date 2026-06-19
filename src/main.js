@@ -15,7 +15,7 @@ const camera = new THREE.PerspectiveCamera(
     2000
 );
 
-const app = document.getElementById('app');
+//const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -38,10 +38,10 @@ function setCanvasPointerEvents(mode) {
 
 async function init() {
     course = new GolfCourse(scene, {
-        width: 200,
-        depth: 200,
+        width: 400,
+        depth: 400,
         segments: 128,
-        maxHeight: 2.8,
+        maxHeight: 0,
         textureRepeat: 14,
         grassCount: 1800,
         holeCount: 1,

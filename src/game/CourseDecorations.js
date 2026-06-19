@@ -46,7 +46,7 @@ export class CourseDecorations {
         this.holePos.set(hp.x, hp.y, hp.z);
 
         const tee = this.course.getTeePosition();
-        const teeX = tee.x;
+        const teeX = tee.x ;
         const teeZ = tee.z;
 
         try {
@@ -164,9 +164,9 @@ export class CourseDecorations {
         if (atTee && this.nail) {
             const tee = this.course.getTeePosition();
             const teeGy = this.course.getHeightAt(tee.x, tee.z);
-            this.nail.position.set(tee.x, teeGy, tee.z);
+            this.nail.position.set(tee.x + 0.03, teeGy + 0.08, tee.z);
             const box = new THREE.Box3().setFromObject(this.nail);
-            this.teeTopY = box.max.y + this.nail.position.y;
+           // this.teeTopY = box.max.y + this.nail.position.y;
             this.teeAnchor.set(tee.x, this.teeTopY, tee.z);
         }
     }
@@ -181,18 +181,18 @@ export class CourseDecorations {
         if (!this.club) return;
         const pullRad = pullBack * 0.75;
         const hitRad = swingForward * 1.2;
-        const dist = 0.42 + pullBack * 0.28 - swingForward * 0.15;
+        const dist = 0.2 + pullBack * 0.28 - swingForward * 0.15 ;
         const swingAngle = -0.42 - pullRad + hitRad + (Math.PI * 0.11);
         this.club.rotation.x = Math.PI * (-0.0115);
         this.club.rotation.y = Math.PI * -0.5;
         this.club.rotation.z = swingAngle; 
 
-        const shaftOffset = 0.3; 
+        const shaftOffset = 0.36; 
 
         this.club.position.set(
             shaftOffset, 
-            0.3,
-            -dist 
+            0.2,
+            -dist
         );
     }
 

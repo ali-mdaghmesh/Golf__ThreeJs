@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const BALL_VISUAL_SCALE = 8;
+export const BALL_VISUAL_SCALE = 2.4;
 
 const PHYSICS_R = 0.02135;
 
@@ -10,7 +10,7 @@ export class BallRenderer {
         this.physicsRadius = physicsRadius;
         this.renderRadius = physicsRadius * BALL_VISUAL_SCALE;
         this.visualOffset = this.renderRadius - this.physicsRadius;
-        this.teeVisualExtra = 0.9;
+        this.teeVisualExtra = 0.1;
 
         this.group = new THREE.Group();
         this.group.name = 'GolfBall';

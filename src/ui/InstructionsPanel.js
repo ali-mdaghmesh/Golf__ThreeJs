@@ -1,6 +1,3 @@
-/**
- * قائمة منبثقة بالتعليمات
- */
 export class InstructionsPanel {
     constructor() {
         this.root = document.getElementById('instructions-panel');

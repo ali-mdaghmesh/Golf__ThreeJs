@@ -160,7 +160,6 @@ export class GolfGame {
         return this._ballVisual;
     }
 
-    /** تحديث فوري: مسار منقط + لاعب + عصا + كاميرا تصويب */
     updateAimPreview() {
         if (!this._canShowAimPreview()) return;
 
@@ -195,7 +194,6 @@ export class GolfGame {
         }
     }
 
-    /** كاميرا مدار: خلف الكرة نحو اتجاه الضربة + إزاحة viewYaw */
     _applyOrbitAimCamera(ballPos, groundY, params) {
         const viewRad = ((params.viewYawDeg ?? 0) * Math.PI) / 180;
         const aimYaw = this._getAimYaw(params);
@@ -203,7 +201,6 @@ export class GolfGame {
         this.orbitCamera.update(ballPos, 0, groundY);
     }
 
-    /** إزاحة زاوية العرض حول الكرة (وضع المتابعة فقط) */
     _applyViewYawOffset(ballPos, params) {
         const viewDeg = params.viewYawDeg ?? 0;
         if (Math.abs(viewDeg) < 0.5) return;
@@ -267,7 +264,6 @@ export class GolfGame {
         document.getElementById('hud-win')?.classList.remove('show');
     }
 
-    /** Space / الزر: سحب العصا للخلف فقط — لا يغيّر الفيزياء */
     beginCharge() {
         if (!this._ready || this._inCup || !this.physics.stopped) return;
         if (this._phase === PHASE.SWINGING) return;

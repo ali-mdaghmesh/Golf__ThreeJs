@@ -6,10 +6,7 @@ const GROUND_TORQUE_GAIN = 20;
 const FIXED_DT = 0.001;
 const MAX_SUBSTEPS = 12;
 
-/**
- * نموذج فيزيائي لكرة الغولف — قانون نيوتن الثاني + العزوم + أويلر
- * المحاور: X أمامي، Y عمودي، Z جانبي (مطابق Three.js)
- */
+
 export class BallPhysics {
     constructor() {
         this.m = 0.04593;
@@ -54,13 +51,9 @@ export class BallPhysics {
         this._accumulator = 0;
     }
 
-    /**
-     * إطلاق الكرة من شروط ابتدائية
-     * @param {number} v0 - السرعة الكلية (م/ث)
-     * @param {number} thetaDeg - زاوية الانطلاق من الأفقي (درجة)
-     */
+
     shoot({
-        v0 = 70,
+        v0 = 100,
         thetaDeg = 12,
         vz0 = 0,
         omegax = 0,

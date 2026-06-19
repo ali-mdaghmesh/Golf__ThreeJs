@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-/** كاميرا تدور حول الكرة — نفس اتجاه التصويب (sin/cos) */
 export class OrbitCamera {
     constructor(camera) {
         this.camera = camera;

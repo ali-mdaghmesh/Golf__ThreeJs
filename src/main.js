@@ -12,7 +12,7 @@ const camera = new THREE.PerspectiveCamera(
     45,
     window.innerWidth / window.innerHeight,
     0.1,
-    400
+    2000
 );
 
 const app = document.getElementById('app');
@@ -46,7 +46,7 @@ async function init() {
         grassCount: 1800,
         holeCount: 1,
         showBunkers: true,
-        showWater: true,
+        showWater: false,
     });
 
     await course.init();

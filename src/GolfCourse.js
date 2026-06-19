@@ -104,12 +104,12 @@ export class GolfCourse {
         this.scene = scene;
 
         this.opt = {
-            width              : 120,
-            depth              : 200,
+            width              : 1200,
+            depth              : 2000,
             segments           : 150,
             maxHeight          : 5,
             noiseSeed          : 42,
-            textureRepeat      : 20,
+            textureRepeat      : 1090,
             grassTexturePath   : null,
             grassNormalPath    : null,
             grassRoughPath     : null,
@@ -435,7 +435,7 @@ export class GolfCourse {
                 roughness         : 0.80,
                 metalness         : 0.0,
                 transparent       : true,
-                opacity           : 0.90,
+                opacity           : 0.1,
                 depthWrite        : false,
                 polygonOffset     : true,
                 polygonOffsetFactor: -2,
@@ -443,11 +443,11 @@ export class GolfCourse {
             });
         } else {
             mat = new THREE.MeshStandardMaterial({
-                color             : 0x4a9a32,
+                color             :0x3aad35,
                 roughness         : 0.82,
                 metalness         : 0.0,
                 transparent       : true,
-                opacity           : 0.82,
+                opacity           : 0,
                 depthWrite        : false,
                 polygonOffset     : true,
                 polygonOffsetFactor: -2,

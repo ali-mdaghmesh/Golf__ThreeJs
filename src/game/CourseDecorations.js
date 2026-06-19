@@ -68,7 +68,7 @@ export class CourseDecorations {
 
         try {
             const club = await loadGltf('./Models/bat/scene.gltf');
-            fitModelToGround(club, 1.42);
+            fitModelToGround(club, 1.2);
             club.rotation.order = 'YXZ';
             this.club = club;
             this.clubPivot.add(club);
@@ -154,9 +154,9 @@ export class CourseDecorations {
             const behind = 1.75;
             const lateral = 0.95;
             this.player.position.set(
-                ballX - this._strokeDir.x * behind + sideX * lateral,
-                groundY,
-                ballZ - this._strokeDir.z * behind + sideZ * lateral
+                ballX - this._strokeDir.x * behind + sideX * lateral-0.3,
+                groundY+1,
+                ballZ - this._strokeDir.z * behind + sideZ * lateral +1.1
             );
             this.player.rotation.y = aimYawRad + Math.PI * 0.12;
         }
@@ -182,11 +182,17 @@ export class CourseDecorations {
         const pullRad = pullBack * 0.75;
         const hitRad = swingForward * 1.2;
         const dist = 0.42 + pullBack * 0.28 - swingForward * 0.15;
-        this.club.rotation.x = -0.42 - pullRad + hitRad;
+        const swingAngle = -0.42 - pullRad + hitRad + (Math.PI * 0.11);
+        this.club.rotation.x = Math.PI * (-0.0115);
+        this.club.rotation.y = Math.PI * -0.5;
+        this.club.rotation.z = swingAngle; 
+
+        const shaftOffset = 0.3; 
+
         this.club.position.set(
-            -this._strokeDir.x * dist,
-            0.04,
-            -this._strokeDir.z * dist
+            shaftOffset, 
+            0.3,
+            -dist 
         );
     }
 

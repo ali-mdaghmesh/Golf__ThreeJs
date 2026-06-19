@@ -1,4 +1,3 @@
-/** معاملات التلامس مع الأرض — وفق الدراسة (μr, e, μimpact) */
 export class GroundMaterial {
     constructor() {
         this.mu_rolling = 0.1;
@@ -7,7 +6,6 @@ export class GroundMaterial {
         this.e = 0.8;
     }
 
-    /** عشب قصير جاف (افتراضي الدراسة) */
     setGrass() {
         this.mu_rolling = 0.1;
         this.mu_sliding = 0.3;
@@ -43,7 +41,6 @@ export class GroundMaterial {
         this.e = 0.82;
     }
 
-    /** @deprecated — استخدم setGrass / setRough */
     change(type) {
         if (type === 'smooth') {
             this.mu_rolling = 0.01;

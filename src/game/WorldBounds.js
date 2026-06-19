@@ -1,6 +1,3 @@
-/**
- * حدود الملعب — تمنع الكرة والكاميرا من الخروج أو النزول تحت الأرض
- */
 export class WorldBounds {
     constructor({ halfWidth, halfDepth, margin = 2, minCameraY = 0.5 }) {
         this.halfWidth = halfWidth;

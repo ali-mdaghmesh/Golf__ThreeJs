@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-/** سماء، إضاءة، وعرض واقعي */
 export function setupScene(scene, renderer) {
     scene.background = new THREE.Color(0x7ec8e8);
     scene.fog = new THREE.FogExp2(0xa8d4e8, 0.0018);

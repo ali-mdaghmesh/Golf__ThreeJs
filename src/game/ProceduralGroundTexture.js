@@ -10,14 +10,11 @@ function mulberry32(seed) {
     };
 }
 
-/**
- * خامة أرض واقعية (بدون ملفات textures خارجية)
- * - تدرجات + بقع + خطوط قص خفيفة
- */
+
 export function createProceduralGrassTexture({
     size = 1024,
     seed = 1337,
-    repeat = 14,
+    repeat = 1999,
 } = {}) {
     const canvas = document.createElement('canvas');
     canvas.width = size;
@@ -25,11 +22,9 @@ export function createProceduralGrassTexture({
     const ctx = canvas.getContext('2d');
     const rnd = mulberry32(seed);
 
-    // base
     ctx.fillStyle = '#2f7a2b';
     ctx.fillRect(0, 0, size, size);
 
-    // noisy blobs
     for (let i = 0; i < 12000; i++) {
         const x = rnd() * size;
         const y = rnd() * size;
@@ -43,7 +38,6 @@ export function createProceduralGrassTexture({
         ctx.fill();
     }
 
-    // mowing stripes (subtle)
     ctx.globalAlpha = 0.12;
     for (let i = 0; i < repeat * 2; i++) {
         const x = (i / (repeat * 2)) * size;

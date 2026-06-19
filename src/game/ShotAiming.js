@@ -1,5 +1,3 @@
-/** اتجاه التصويب والسرعة الابتدائية من معاملات اللوحة */
-
 export function getHoleYawRad(ballX, ballZ, holeX, holeZ) {
     const dx = holeX - ballX;
     const dz = holeZ - ballZ;
@@ -7,14 +5,12 @@ export function getHoleYawRad(ballX, ballZ, holeX, holeZ) {
     return Math.atan2(dx, dz);
 }
 
-/** زاوية الإطلاق بالراديان (0° = نحو الحفرة + aimYawDeg) */
 export function getAimYawRad(params, ballX, ballZ, holeX, holeZ) {
     const base = getHoleYawRad(ballX, ballZ, holeX, holeZ);
     const off = ((params.aimYawDeg ?? 0) * Math.PI) / 180;
     return base + off;
 }
 
-/** سرعات الإطلاق — نفس تعيين GolfGame (أمام = اتجاه التصويب) */
 export function computeLaunchVelocity(params, aimYawRad) {
     const theta = (params.thetaDeg * Math.PI) / 180;
     const v0 = params.v0;

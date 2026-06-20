@@ -3,24 +3,41 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
 
+// دالة بسيطة لتحميل موديل GLTF وترجيعه كـ Promise
 function loadGltf(path) {
     return new Promise((resolve, reject) => {
-        loader.load(path, (gltf) => resolve(gltf.scene), undefined, reject);
+        loader.load(
+            path,
+            function (gltf) {
+                resolve(gltf.scene);
+            },
+            undefined,
+            function (err) {
+                reject(err);
+            }
+        );
     });
 }
 
-/** قياس الارتفاع ثم إسقاط قاعدة النموذج على y=0 */
+// بناخد ارتفاع الموديل ونعمله scale للارتفاع المطلوب، وبعدين ننزله لحتى قاعدته تلمس y = 0
 function fitModelToGround(model, targetHeight) {
     const box = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     box.getSize(size);
-    const h = size.y || 1;
+
+    let h = size.y;
+    if (!h) {
+        h = 1;
+    }
     model.scale.setScalar(targetHeight / h);
+
+    // بعد ما عملنا scale لازم نعيد حساب الصندوق لأنه تغير
     box.setFromObject(model);
     model.position.y = -box.min.y;
     return box;
 }
 
+// هاد الكلاس مسؤول عن كل الأشياء المرسومة حوالين الملعب: الـ tee، العصا، الحفرة، اللاعب، والعشب
 export class CourseDecorations {
     constructor(scene, course) {
         this.scene = scene;
@@ -46,10 +63,10 @@ export class CourseDecorations {
         this.holePos.set(hp.x, hp.y, hp.z);
 
         const tee = this.course.getTeePosition();
-        const teeX = tee.x ;
+        const teeX = tee.x;
         const teeZ = tee.z;
 
-        try {
+        // الوتد (nail) اللي عليه الكرة بأول ضربة
             const nail = await loadGltf('./Models/nail/scene.gltf');
             fitModelToGround(nail, 0.12);
             const teeGy = this.course.getHeightAt(teeX, teeZ);
@@ -60,46 +77,34 @@ export class CourseDecorations {
             const box = new THREE.Box3().setFromObject(nail);
             this.teeTopY = box.max.y + nail.position.y;
             this.teeAnchor.set(teeX, this.teeTopY, teeZ);
-        } catch (e) {
-            console.warn('nail model', e);
-            this.teeTopY = this.course.getHeightAt(teeX, teeZ) + 0.06;
-            this.teeAnchor.set(teeX, this.teeTopY, teeZ);
-        }
 
-        try {
+
+        // عصا الغولف
             const club = await loadGltf('./Models/bat/scene.gltf');
             fitModelToGround(club, 1.2);
             club.rotation.order = 'YXZ';
             this.club = club;
             this.clubPivot.add(club);
             this.scene.add(this.clubPivot);
-        } catch (e) {
-            console.warn('bat model', e);
-        }
 
-        try {
+        // علم/فتحة الحفرة
+   
             const hole = await loadGltf('./Models/hole/scene.gltf');
             fitModelToGround(hole, 0.35);
             hole.position.set(hp.x, this.course.getHeightAt(hp.x, hp.z), hp.z);
             this.scene.add(hole);
             this.hole = hole;
-        } catch (e) {
-            console.warn('hole model', e);
-        }
 
-        try {
+        // شخصية اللاعب
             const player = await loadGltf('./Models/golf_player/scene.gltf');
-            const box = fitModelToGround(player, 2.05);
+            fitModelToGround(player, 2.05);
             player.rotation.order = 'YXZ';
             this._playerFeetOffset = 0;
             this.player = player;
             this.scene.add(player);
             this.showPlayer(true);
-        } catch (e) {
-            console.warn('golf_player model', e);
-        }
 
-        try {
+        // كم حزمة عشب عشوائية حوالين الملعب لإضافة تفاصيل
             const grass = await loadGltf('./Models/grass/scene.gltf');
             fitModelToGround(grass, 0.35);
             for (let i = 0; i < 12; i++) {
@@ -112,16 +117,16 @@ export class CourseDecorations {
                 this.scene.add(g);
                 this.grassMeshes.push(g);
             }
-        } catch (e) {
-            console.warn('grass model', e);
-        }
+
 
         const gy = this.course.getHeightAt(this.teeAnchor.x, this.teeAnchor.z);
         this.positionForStroke(this.teeAnchor.x, this.teeAnchor.z, 0, gy, true);
     }
 
     showPeg(visible) {
-        if (this.nail) this.nail.visible = visible;
+        if (this.nail) {
+            this.nail.visible = visible;
+        }
     }
 
     showClub(visible) {
@@ -129,7 +134,9 @@ export class CourseDecorations {
     }
 
     showPlayer(visible) {
-        if (this.player) this.player.visible = visible;
+        if (this.player) {
+            this.player.visible = visible;
+        }
     }
 
     showTeeSetup(visible) {
@@ -137,12 +144,11 @@ export class CourseDecorations {
         this.showClub(visible);
     }
 
-    /**
-     * @param {number} aimYawRad - اتجاه الإطلاق بالراديان
-     */
+
     positionForStroke(ballX, ballZ, aimYawRad, groundY, atTee = false) {
         this._strokeDir.set(Math.sin(aimYawRad), 0, Math.cos(aimYawRad));
 
+        // المحور الجانبي (يمين/شمال) بناءً على اتجاه الضربة
         const sideX = this._strokeDir.z;
         const sideZ = -this._strokeDir.x;
 
@@ -153,11 +159,9 @@ export class CourseDecorations {
         if (this.player) {
             const behind = 1.75;
             const lateral = 0.95;
-            this.player.position.set(
-                ballX - this._strokeDir.x * behind + sideX * lateral-0.3,
-                groundY+1,
-                ballZ - this._strokeDir.z * behind + sideZ * lateral +1.1
-            );
+            const playerX = ballX - this._strokeDir.x * behind + sideX * lateral - 0.3;
+            const playerZ = ballZ - this._strokeDir.z * behind + sideZ * lateral + 1.1;
+            this.player.position.set(playerX, groundY + 1, playerZ);
             this.player.rotation.y = aimYawRad + Math.PI * 0.12;
         }
 
@@ -165,35 +169,35 @@ export class CourseDecorations {
             const tee = this.course.getTeePosition();
             const teeGy = this.course.getHeightAt(tee.x, tee.z);
             this.nail.position.set(tee.x + 0.03, teeGy + 0.08, tee.z);
-            const box = new THREE.Box3().setFromObject(this.nail);
-           // this.teeTopY = box.max.y + this.nail.position.y;
+            // ملاحظة: تركت هاد السطر معلق لأنه كان يسبب مشكلة بارتفاع الكرة، خليه هيك حالياً
+            // this.teeTopY = box.max.y + this.nail.position.y;
             this.teeAnchor.set(tee.x, this.teeTopY, tee.z);
         }
     }
 
     setSwingPose(back = 0, swingT = 0) {
-        const forward = swingT > 0 ? swingT : 0;
+        let forward = 0;
+        if (swingT > 0) {
+            forward = swingT;
+        }
         const pull = back * (1 - forward);
         this._applyClubSwing(pull, forward);
     }
 
     _applyClubSwing(pullBack, swingForward = 0) {
         if (!this.club) return;
+
         const pullRad = pullBack * 0.75;
         const hitRad = swingForward * 1.2;
-        const dist = 0.2 + pullBack * 0.28 - swingForward * 0.15 ;
+        const dist = 0.2 + pullBack * 0.28 - swingForward * 0.15;
         const swingAngle = -0.42 - pullRad + hitRad + (Math.PI * 0.11);
+
         this.club.rotation.x = Math.PI * (-0.0115);
         this.club.rotation.y = Math.PI * -0.5;
-        this.club.rotation.z = swingAngle; 
+        this.club.rotation.z = swingAngle;
 
-        const shaftOffset = 0.36; 
-
-        this.club.position.set(
-            shaftOffset, 
-            0.2,
-            -dist
-        );
+        const shaftOffset = 0.36;
+        this.club.position.set(shaftOffset, 0.2, -dist);
     }
 
     getTeeAnchor() {

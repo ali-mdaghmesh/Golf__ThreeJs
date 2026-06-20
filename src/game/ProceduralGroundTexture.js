@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+// مولد أرقام عشوائية بسيد ثابت (حتى نفس الخريطة تطلع نفسها كل مرة)
+// ما لمست المعادلة هاي لأنها خوارزمية جاهزة (mulberry32) وبتشتغل تمام
 function mulberry32(seed) {
     let t = seed >>> 0;
     return function () {
@@ -10,7 +12,7 @@ function mulberry32(seed) {
     };
 }
 
-
+// بيرسم تكستشر عشب على canvas ويرجعه كـ THREE.Texture جاهز للاستخدام
 export function createProceduralGrassTexture({
     size = 1024,
     seed = 1337,
@@ -22,36 +24,46 @@ export function createProceduralGrassTexture({
     const ctx = canvas.getContext('2d');
     const rnd = mulberry32(seed);
 
+    // لون خلفية العشب الأساسي
     ctx.fillStyle = '#2f7a2b';
     ctx.fillRect(0, 0, size, size);
 
+    // نقاط عشوائية صغيرة حتى يطلع شكل العشب مو لون فلات
     for (let i = 0; i < 12000; i++) {
         const x = rnd() * size;
         const y = rnd() * size;
         const r = 0.8 + rnd() * 3.2;
-        const g = 110 + (rnd() * 80) | 0;
-        const b = 55 + (rnd() * 40) | 0;
+        const g = (110 + rnd() * 80) | 0;
+        const b = (55 + rnd() * 40) | 0;
         const a = 0.06 + rnd() * 0.08;
-        ctx.fillStyle = `rgba(${40 + (rnd() * 35) | 0},${g},${b},${a})`;
+        const red = (40 + rnd() * 35) | 0;
+
+        ctx.fillStyle = 'rgba(' + red + ',' + g + ',' + b + ',' + a + ')';
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
     }
 
+    // خطوط رفيعة فاتحة وغامقة بالتبادل، تعطي إحساس إنه فيه قص للعشب
     ctx.globalAlpha = 0.12;
-    for (let i = 0; i < repeat * 2; i++) {
-        const x = (i / (repeat * 2)) * size;
-        ctx.fillStyle = i % 2 === 0 ? '#2a6f27' : '#357f30';
-        ctx.fillRect(x, 0, size / (repeat * 2), size);
+    const stripeCount = repeat * 2;
+    for (let i = 0; i < stripeCount; i++) {
+        const x = (i / stripeCount) * size;
+        if (i % 2 === 0) {
+            ctx.fillStyle = '#2a6f27';
+        } else {
+            ctx.fillStyle = '#357f30';
+        }
+        ctx.fillRect(x, 0, size / stripeCount, size);
     }
     ctx.globalAlpha = 1;
 
     const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(repeat, repeat);
     tex.anisotropy = 8;
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.needsUpdate = true;
     return tex;
 }
-

@@ -11,35 +11,60 @@ export class WorldBounds {
         this.getGroundHeight = fn;
     }
 
+    // بيقص الإحداثيات حتى تضل جوا حدود الملعب
     clampXZ(x, z) {
         const maxX = this.halfWidth - this.margin;
         const maxZ = this.halfDepth - this.margin;
-        return {
-            x: Math.max(-maxX, Math.min(maxX, x)),
-            z: Math.max(-maxZ, Math.min(maxZ, z)),
-        };
+
+        let clampedX = x;
+        if (clampedX > maxX){
+             clampedX = maxX;
+        }
+        if (clampedX < -maxX){
+            clampedX = -maxX;
+        }
+
+        let clampedZ = z;
+        
+        if (clampedZ > maxZ){
+            clampedZ = maxZ;
+        }
+        if (clampedZ < -maxZ){
+
+        } 
+
+        return { x: clampedX, z: clampedZ };
     }
 
     clampBall(physics) {
-        const { x, z } = this.clampXZ(physics.x, physics.z);
-        physics.x = x;
-        physics.z = z;
-        const gy = this.getGroundHeight ? this.getGroundHeight(x, z) : 0;
+        const result = this.clampXZ(physics.x, physics.z);
+        physics.x = result.x;
+        physics.z = result.z;
+
+        let gy = 0;
+        if (this.getGroundHeight) {
+            gy = this.getGroundHeight(result.x, result.z);
+        }
+
         const floor = gy + physics.R;
         if (physics.y < floor) {
             physics.y = floor;
-            if (physics.vy < 0) physics.vy = 0;
+            if (physics.vy < 0) {
+                physics.vy = 0;
+            }
         }
     }
 
     clampCamera(camera) {
-        const { x, z } = this.clampXZ(camera.position.x, camera.position.z);
-        camera.position.x = x;
-        camera.position.z = z;
+        const result = this.clampXZ(camera.position.x, camera.position.z);
+        camera.position.x = result.x;
+        camera.position.z = result.z;
 
-        const gy = this.getGroundHeight
-            ? this.getGroundHeight(camera.position.x, camera.position.z)
-            : 0;
+        let gy = 0;
+        if (this.getGroundHeight) {
+            gy = this.getGroundHeight(camera.position.x, camera.position.z);
+        }
+
         const minY = gy + this.minCameraY;
         if (camera.position.y < minY) {
             camera.position.y = minY;

@@ -14,12 +14,14 @@ const CUP_RADIUS = 0.38;
 const MAX_SWING_PULL = 1.0;
 const SWING_DURATION = 0.24;
 
+// مراحل الضربة: واقفة، عم نسحب العصا للخلف، أو عم تضرب
 const PHASE = {
     IDLE: 'idle',
     CHARGING: 'charging',
     SWINGING: 'swinging',
 };
 
+// هاد هو الكلاس الرئيسي للعبة، هو اللي بيربط الفيزياء مع الرسم مع الكاميرا مع الواجهة
 export class GolfGame {
     constructor({ scene, camera, course, dashboard, flyController }) {
         this.scene = scene;
@@ -28,7 +30,8 @@ export class GolfGame {
         this.dashboard = dashboard;
         this.flyController = flyController;
 
-        const { width, depth } = course.opt;
+        const width = course.opt.width;
+        const depth = course.opt.depth;
 
         this.physics = new BallPhysics();
         this.physics.setGroundCallbacks(
@@ -91,35 +94,49 @@ export class GolfGame {
 
     _resolveTeePosition() {
         const hole = this.course.holes[0];
-        if (!hole) return { x: 0, z: -41 };
+        if (!hole) {
+            return { x: 0, z: -41 };
+        }
         return { x: hole.teePos.x, z: hole.teePos.z - 5 };
     }
 
     _resolveHolePosition() {
         const hole = this.course.holes[0];
-        if (!hole) return { x: 0, z: 36 };
+        if (!hole) {
+            return { x: 0, z: 36 };
+        }
         return { x: hole.holePos.x, z: hole.holePos.z };
     }
 
+    // بياخد إعدادات الضربة الحالية من الـ dashboard، وإذا مافي dashboard بيستخدم الافتراضي
     _getParams() {
-        return this.dashboard?.getShootParams() ?? { ...this.defaultShot };
+        if (this.dashboard) {
+            const fromDashboard = this.dashboard.getShootParams();
+            if (fromDashboard) {
+                return fromDashboard;
+            }
+        }
+        return Object.assign({}, this.defaultShot);
     }
 
     _getAimYaw(params) {
-        const px = params.startX ?? this.physics.x;
-        const pz = params.startZ ?? this.physics.z;
-        return getAimYawRad(
-            params,
-            px,
-            pz,
-            this.holePosition.x,
-            this.holePosition.z
-        );
+        let px = params.startX;
+        if (px === undefined || px === null) {
+            px = this.physics.x;
+        }
+        let pz = params.startZ;
+        if (pz === undefined || pz === null) {
+            pz = this.physics.z;
+        }
+        return getAimYawRad(params, px, pz, this.holePosition.x, this.holePosition.z);
     }
 
     _isNearTee() {
         const a = this.decorations.getTeeAnchor();
-        return Math.hypot(this.physics.x - a.x, this.physics.z - a.z) < 0.25;
+        const dx = this.physics.x - a.x;
+        const dz = this.physics.z - a.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        return dist < 0.25;
     }
 
     _isAtTeeDisplay() {
@@ -127,12 +144,11 @@ export class GolfGame {
     }
 
     _canShowAimPreview() {
-        return (
-            this._ready &&
-            this.physics.stopped &&
-            !this._inCup &&
-            this._phase !== PHASE.SWINGING
-        );
+        if (!this._ready) return false;
+        if (!this.physics.stopped) return false;
+        if (this._inCup) return false;
+        if (this._phase === PHASE.SWINGING) return false;
+        return true;
     }
 
     _syncBallOnTee() {
@@ -147,15 +163,17 @@ export class GolfGame {
     }
 
     _getBallVisualPos(gy) {
-        const { x, y, z } = this.physics.position;
+        const x = this.physics.position.x;
+        const y = this.physics.position.y;
+        const z = this.physics.position.z;
+
         const onTee = this._isAtTeeDisplay();
-        const vy = this.ball.computeVisualY(
-            y,
-            gy,
-            onTee,
-            onTee ? this.decorations.getTeeTopY() : null,
-            this.physics.stopped
-        );
+        let teeTopY = null;
+        if (onTee) {
+            teeTopY = this.decorations.getTeeTopY();
+        }
+
+        const vy = this.ball.computeVisualY(y, gy, onTee, teeTopY, this.physics.stopped);
         this._ballVisual.set(x, vy, z);
         return this._ballVisual;
     }
@@ -164,8 +182,16 @@ export class GolfGame {
         if (!this._canShowAimPreview()) return;
 
         const params = this._getParams();
-        const tx = params.startX ?? this.physics.x;
-        const tz = params.startZ ?? this.physics.z;
+
+        let tx = params.startX;
+        if (tx === undefined || tx === null) {
+            tx = this.physics.x;
+        }
+        let tz = params.startZ;
+        if (tz === undefined || tz === null) {
+            tz = this.physics.z;
+        }
+
         const gy = this.course.getHeightAt(tx, tz);
 
         this.physics.x = tx;
@@ -195,14 +221,21 @@ export class GolfGame {
     }
 
     _applyOrbitAimCamera(ballPos, groundY, params) {
-        const viewRad = ((params.viewYawDeg ?? 0) * Math.PI) / 180;
+        let viewDeg = params.viewYawDeg;
+        if (viewDeg === undefined || viewDeg === null) {
+            viewDeg = 0;
+        }
+        const viewRad = (viewDeg * Math.PI) / 180;
         const aimYaw = this._getAimYaw(params);
         this.orbitCamera.setAngle(aimYaw + Math.PI + viewRad);
         this.orbitCamera.update(ballPos, 0, groundY);
     }
 
     _applyViewYawOffset(ballPos, params) {
-        const viewDeg = params.viewYawDeg ?? 0;
+        let viewDeg = params.viewYawDeg;
+        if (viewDeg === undefined || viewDeg === null) {
+            viewDeg = 0;
+        }
         if (Math.abs(viewDeg) < 0.5) return;
 
         const viewRad = (viewDeg * Math.PI) / 180;
@@ -249,19 +282,21 @@ export class GolfGame {
         this._strokeCount = 0;
 
         this.defaultShot = buildDefaultShot(this.teePosition);
-        this.dashboard?.setDefaults(this.defaultShot);
-        this.dashboard?.setStrokePosition(anchor.x, anchor.z, false);
+        if (this.dashboard) {
+            this.dashboard.setDefaults(this.defaultShot);
+            this.dashboard.setStrokePosition(anchor.x, anchor.z, false);
+        }
 
         this.updateAimPreview();
         const ballVisual = this._getBallVisualPos(gy);
-        const holePos = new THREE.Vector3(
-            this.holePosition.x,
-            gy,
-            this.holePosition.z
-        );
+        const holePos = new THREE.Vector3(this.holePosition.x, gy, this.holePosition.z);
         this.chaseCamera.snapToTee(ballVisual, holePos, gy);
         this.orbitCamera.resetAngle(ballVisual, holePos);
-        document.getElementById('hud-win')?.classList.remove('show');
+
+        const winEl = document.getElementById('hud-win');
+        if (winEl) {
+            winEl.classList.remove('show');
+        }
     }
 
     beginCharge() {
@@ -289,17 +324,31 @@ export class GolfGame {
     }
 
     _executeShot(params) {
-        const defaults = this.dashboard?.getDefaults() ?? this.defaultShot;
+        let defaults = this.defaultShot;
+        if (this.dashboard) {
+            const dashDefaults = this.dashboard.getDefaults();
+            if (dashDefaults) {
+                defaults = dashDefaults;
+            }
+        }
         this._lastShotWasDefault = isDefaultShotParams(params, defaults);
         this._wasMoving = false;
         this._strokeCount += 1;
 
-        const gx = params.startX ?? this.physics.x;
-        const gz = params.startZ ?? this.physics.z;
+        let gx = params.startX;
+        if (gx === undefined || gx === null) {
+            gx = this.physics.x;
+        }
+        let gz = params.startZ;
+        if (gz === undefined || gz === null) {
+            gz = this.physics.z;
+        }
         const gy = this.course.getHeightAt(gx, gz);
         this._carryStart.set(gx, gz);
 
-        if (this._atTee) this.decorations.showPeg(false);
+        if (this._atTee) {
+            this.decorations.showPeg(false);
+        }
         this.decorations.showClub(false);
 
         this.physics.setDimpled(params.dimpled !== false);
@@ -324,20 +373,34 @@ export class GolfGame {
         this.trajectory.hide();
         this.ball.clearTrail();
         this.orbitCamera.enableAutoRotate(true);
-        document.getElementById('hud-win')?.classList.remove('show');
+
+        const winEl = document.getElementById('hud-win');
+        if (winEl) {
+            winEl.classList.remove('show');
+        }
     }
 
     shoot(params) {
-        this._executeShot(params ?? this._getParams());
+        if (params) {
+            this._executeShot(params);
+        } else {
+            this._executeShot(this._getParams());
+        }
     }
 
     setCameraMode(mode) {
         const prev = this.cameraMode;
         this.cameraMode = mode;
-        if (prev === 'free') this.flyController?.deactivate();
+
+        if (prev === 'free' && this.flyController) {
+            this.flyController.deactivate();
+        }
+
         if (mode === 'free') {
             this.cancelCharge();
-            this.flyController?.activate();
+            if (this.flyController) {
+                this.flyController.activate();
+            }
         } else {
             this.updateAimPreview();
         }
@@ -349,7 +412,9 @@ export class GolfGame {
 
     setTrail(enabled) {
         this.showTrail = enabled;
-        if (!enabled) this.ball.clearTrail();
+        if (!enabled) {
+            this.ball.clearTrail();
+        }
     }
 
     setBallType(dimpled) {
@@ -372,17 +437,13 @@ export class GolfGame {
     _checkCupEntry(gy) {
         if (this._inCup) return;
 
-        const dist = Math.hypot(
-            this.physics.x - this.holePosition.x,
-            this.physics.z - this.holePosition.z
-        );
+        const dx = this.physics.x - this.holePosition.x;
+        const dz = this.physics.z - this.holePosition.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
         if (dist >= CUP_RADIUS) return;
 
         const zone = this.course.getZoneAt(this.physics.x, this.physics.z);
-        const onGreen =
-            zone === ZONE.GREEN ||
-            zone === ZONE.FAIRWAY ||
-            zone === ZONE.TEE;
+        const onGreen = zone === ZONE.GREEN || zone === ZONE.FAIRWAY || zone === ZONE.TEE;
 
         if (!onGreen || !this._isBallOnGround(gy)) return;
         this._sinkInCup();
@@ -390,7 +451,9 @@ export class GolfGame {
 
     _prepareNextStroke(gy) {
         const floor = gy + this.physics.R;
-        if (this.physics.y < floor) this.physics.y = floor;
+        if (this.physics.y < floor) {
+            this.physics.y = floor;
+        }
         this.physics.stopped = true;
 
         this._atTee = this._isNearTee();
@@ -398,7 +461,9 @@ export class GolfGame {
         this.decorations.showClub(true);
         this.decorations.showPlayer(true);
 
-        this.dashboard?.setStrokePosition(this.physics.x, this.physics.z);
+        if (this.dashboard) {
+            this.dashboard.setStrokePosition(this.physics.x, this.physics.z);
+        }
         this._phase = PHASE.IDLE;
         this.orbitCamera.enableAutoRotate(false);
         this.updateAimPreview();
@@ -407,14 +472,16 @@ export class GolfGame {
     update(dt, flyController) {
         if (!this._ready) return;
 
+        // عم نسحب العصا للخلف
         if (this._phase === PHASE.CHARGING) {
             this._swingPull = Math.min(this._swingPull + dt * 0.85, MAX_SWING_PULL);
             this.decorations.setSwingPose(this._swingPull, 0);
         }
 
+        // عم تضرب العصا فعلياً، وبعد ما تخلص المدة بنطلق الكرة
         if (this._phase === PHASE.SWINGING) {
             this._swingTimer -= dt;
-            const t = 1 - Math.max(0, this._swingTimer) / SWING_DURATION;
+            let t = 1 - Math.max(0, this._swingTimer) / SWING_DURATION;
             this.decorations.setSwingPose(0, t);
             if (this._swingTimer <= 0) {
                 this._phase = PHASE.IDLE;
@@ -453,10 +520,10 @@ export class GolfGame {
     _onBallJustStopped(gy) {
         if (this._inCup) return;
 
-        const dist = Math.hypot(
-            this.physics.x - this.holePosition.x,
-            this.physics.z - this.holePosition.z
-        );
+        const dx = this.physics.x - this.holePosition.x;
+        const dz = this.physics.z - this.holePosition.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
         const zone = this.course.getZoneAt(this.physics.x, this.physics.z);
         const onGreen = zone === ZONE.GREEN || zone === ZONE.FAIRWAY;
 
@@ -465,12 +532,8 @@ export class GolfGame {
             return;
         }
 
-        if (
-            this._lastShotWasDefault &&
-            dist < 1.5 &&
-            onGreen &&
-            this._isBallOnGround(gy)
-        ) {
+        // إذا كانت أول ضربة افتراضية ووصلت قريبة من الحفرة، منعتبرها دخلت (تسهيل بسيط للعبة)
+        if (this._lastShotWasDefault && dist < 1.5 && onGreen && this._isBallOnGround(gy)) {
             this._sinkInCup();
             return;
         }
@@ -485,17 +548,18 @@ export class GolfGame {
         this.trajectory.hide();
         this.decorations.showClub(false);
 
-        const hgy = this.course.getHeightAt(
-            this.holePosition.x,
-            this.holePosition.z
-        );
+        const hgy = this.course.getHeightAt(this.holePosition.x, this.holePosition.z);
         this.physics.x = this.holePosition.x;
         this.physics.z = this.holePosition.z;
         this.physics.y = hgy + this.physics.R * 0.3;
         this.physics.stopped = true;
 
         this.ball.sync(this.physics, false, hgy, { stopped: true });
-        document.getElementById('hud-win')?.classList.add('show');
+
+        const winEl = document.getElementById('hud-win');
+        if (winEl) {
+            winEl.classList.add('show');
+        }
     }
 
     _updateCamera(dt, flyController, gy) {
@@ -523,13 +587,7 @@ export class GolfGame {
         }
 
         if (this.cameraMode === 'follow' && this.followBall) {
-            this.chaseCamera.update(
-                ballPos,
-                this.physics.velocity,
-                gy,
-                this._holeTarget,
-                dt
-            );
+            this.chaseCamera.update(ballPos, this.physics.velocity, gy, this._holeTarget, dt);
             if (this._canShowAimPreview()) {
                 this._applyViewYawOffset(ballPos, params);
             }
@@ -539,17 +597,23 @@ export class GolfGame {
     _updateHUD() {
         const p = this.physics.position;
         const gy = this.course.getHeightAt(p.x, p.z);
-        const carry = Math.hypot(p.x - this._carryStart.x, p.z - this._carryStart.y);
-        const distToHole = Math.hypot(
-            p.x - this.holePosition.x,
-            p.z - this.holePosition.z
-        );
 
-        let state = this._inCup
-            ? 'في الحفرة'
-            : this.physics.stopped
-              ? 'جاهزة للضربة'
-              : 'طيران';
+        const carryDx = p.x - this._carryStart.x;
+        const carryDz = p.z - this._carryStart.y;
+        const carry = Math.sqrt(carryDx * carryDx + carryDz * carryDz);
+
+        const holeDx = p.x - this.holePosition.x;
+        const holeDz = p.z - this.holePosition.z;
+        const distToHole = Math.sqrt(holeDx * holeDx + holeDz * holeDz);
+
+        let state;
+        if (this._inCup) {
+            state = 'في الحفرة';
+        } else if (this.physics.stopped) {
+            state = 'جاهزة للضربة';
+        } else {
+            state = 'طيران';
+        }
 
         if (this._phase === PHASE.CHARGING) {
             state = 'سحب العصا...';
@@ -557,36 +621,39 @@ export class GolfGame {
             state = 'ضربة...';
         }
 
-        this.dashboard?.updateStats({
-            speed: this.physics.speed,
-            height: Math.max(0, p.y - gy - this.physics.R),
-            carry,
-            bounces: this.physics.bounceCount,
-            time: this.physics.t,
-            state,
-            strokes: this._strokeCount,
-        });
+        if (this.dashboard) {
+            this.dashboard.updateStats({
+                speed: this.physics.speed,
+                height: Math.max(0, p.y - gy - this.physics.R),
+                carry,
+                bounces: this.physics.bounceCount,
+                time: this.physics.t,
+                state,
+                strokes: this._strokeCount,
+            });
+        }
 
         const distEl = document.getElementById('hud-distance');
         if (distEl) {
-            distEl.textContent = this._inCup
-                ? '⛳ داخل الحفرة'
-                : `المسافة للحفرة: ${distToHole.toFixed(1)} م`;
+            if (this._inCup) {
+                distEl.textContent = '⛳ داخل الحفرة';
+            } else {
+                distEl.textContent = `المسافة للحفرة: ${distToHole.toFixed(1)} م`;
+            }
         }
 
         const zone = this.course.getZoneAt(p.x, p.z);
         const zoneEl = document.getElementById('hud-zone');
         if (zoneEl) {
-            const labels = {
-                [ZONE.TEE]: 'منطقة الإرسال',
-                [ZONE.FAIRWAY]: 'الفيرواي',
-                [ZONE.GREEN]: 'الجرين',
-                [ZONE.ROUGH]: 'عشب طويل',
-                [ZONE.BUNKER]: 'بونكر',
-                [ZONE.WATER]: 'ماء',
-                [ZONE.OUT]: 'خارج الحدود',
-            };
-            zoneEl.textContent = labels[zone] ?? zone;
+            let label = zone;
+            if (zone === ZONE.TEE) label = 'منطقة الإرسال';
+            else if (zone === ZONE.FAIRWAY) label = 'الفيرواي';
+            else if (zone === ZONE.GREEN) label = 'الجرين';
+            else if (zone === ZONE.ROUGH) label = 'عشب طويل';
+            else if (zone === ZONE.BUNKER) label = 'بونكر';
+            else if (zone === ZONE.WATER) label = 'ماء';
+            else if (zone === ZONE.OUT) label = 'خارج الحدود';
+            zoneEl.textContent = label;
         }
     }
 

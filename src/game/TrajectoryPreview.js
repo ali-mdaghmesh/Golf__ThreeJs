@@ -29,15 +29,12 @@ export class TrajectoryPreview {
     }
 
     show(physicsRef, params, holePos, getHeight, getZone) {
-        const points = this._simulate(
-            physicsRef,
-            params,
-            holePos,
-            getHeight,
-            getZone
-        );
+        const points = this._simulate(physicsRef, params, holePos, getHeight, getZone);
+
         this.hide();
-        if (points.length < 2) return;
+        if (points.length < 2) {
+            return;
+        }
 
         const geo = new THREE.BufferGeometry().setFromPoints(points);
         this.line = new THREE.Line(geo, this._mat);
@@ -46,13 +43,21 @@ export class TrajectoryPreview {
         this.scene.add(this.line);
     }
 
+    // بنشغل محاكاة فيزياء كاملة بدون رسم فعلي، فقط حتى ناخد نقاط المسار
     _simulate(physicsRef, params, holePos, getHeight, getZone) {
         const sim = new BallPhysics();
         sim.setDimpled(params.dimpled !== false);
         sim.setGroundCallbacks(getHeight, getZone);
 
-        const gx = params.startX ?? physicsRef.x;
-        const gz = params.startZ ?? physicsRef.z;
+        let gx = params.startX;
+        if (gx === undefined || gx === null) {
+            gx = physicsRef.x;
+        }
+        let gz = params.startZ;
+        if (gz === undefined || gz === null) {
+            gz = physicsRef.z;
+        }
+
         const gy0 = getHeight(gx, gz);
         const aimYaw = getAimYawRad(params, gx, gz, holePos.x, holePos.z);
         const launch = computeLaunchVelocity(params, aimYaw);
@@ -73,22 +78,29 @@ export class TrajectoryPreview {
         let steps = 0;
         let sample = 0;
 
+        // بنمشي المحاكاة خطوة خطوة، وبناخد نقطة كل كم خطوة فقط (مش كل فريم) حتى الخط ما يصير كثيف زيادة
         while (!sim.stopped && steps < 25000) {
             sim.update(0.001);
             steps++;
             sample++;
-            if (sample % 16 !== 0) continue;
+
+            if (sample % 16 !== 0) {
+                continue;
+            }
 
             const gy = getHeight(sim.x, sim.z);
             const surfaceY = gy + VISUAL_R;
             const airborne = sim.y > gy + sim.R + 0.015;
-            const vy = airborne ? sim.y + VISUAL_OFFSET : surfaceY;
-            pts.push(new THREE.Vector3(sim.x, vy, sim.z));
-        }
 
-        if (pts.length === 0) {
-            pts.push(new THREE.Vector3(gx, gy0 + VISUAL_R, gz));
-        }
+            let vy;
+            if (airborne) {
+                vy = sim.y + VISUAL_OFFSET;
+            } else {
+                vy = surfaceY;
+            }
+
+            pts.push(new THREE.Vector3(sim.x, vy, sim.z));
+        }        
         return pts;
     }
 }

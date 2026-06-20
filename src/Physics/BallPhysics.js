@@ -18,7 +18,7 @@ export class BallPhysics {
 
         this.setDimpled(true);
 
-        this.ground = new GroundMaterial();
+        this.ground = new GroundMaterial(); 
         this.getGroundHeight = null;
         this.getZoneAt = null;
 

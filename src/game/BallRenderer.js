@@ -2,27 +2,22 @@ import * as THREE from 'three';
 
 export const BALL_VISUAL_SCALE = 2.4;
 
-// نصف قطر الكرة الحقيقي اللي بنستخدمه بالفيزياء
 const R = 0.02135;
 
-// هاد الكلاس مسؤول عن رسم الكرة على الشاشة (بدون موديل جاهز عشان أسهل)
 export class BallRenderer {
     constructor(scene, physicsRadius = R) {
         this.physicsRadius = physicsRadius;
         this.renderRadius = physicsRadius * BALL_VISUAL_SCALE;
         this.visualOffset = this.renderRadius - this.physicsRadius;
-        this.teeVisualExtra = 0.1; // مسافة زيادة عشان المسمار
+        this.teeVisualExtra = 0.1;
 
         this.group = new THREE.Group();
         this.group.name = 'GolfBall';
 
-        // عمل شكل الكرة
         let ballGeo = new THREE.SphereGeometry(this.renderRadius, 48, 48);
         let ballMat = new THREE.MeshPhysicalMaterial();
         
         this.mesh = new THREE.Mesh(ballGeo, ballMat);
-       // this.mesh.castShadow = true;
-        //this.mesh.receiveShadow = true;
         this.group.add(this.mesh);
 
         this.trailMax = 120;
@@ -38,7 +33,6 @@ export class BallRenderer {
         scene.add(this.group);
     }
 
-    // بيحسب وين لازم ترتفع الكرة بمحور Y
     computeVisualY(physicsY, groundY, onTee, teeTopY, stopped = false) {
         if (onTee == true && teeTopY != null) {
             return teeTopY + this.renderRadius + this.teeVisualExtra;
@@ -47,7 +41,6 @@ export class BallRenderer {
         let surfaceY = groundY + this.renderRadius;
         let contact = groundY + this.physicsRadius;
 
-        // إذا الكرة واقفة أو قريبة كتير من الأرض، خليها تلزق بالسطح تماماً
         let onGround = false;
         
         if (stopped == true) {
@@ -70,10 +63,9 @@ export class BallRenderer {
             if (this.trailLine != null) {
                 this.trailLine.visible = false;
             }
-            return; // وقف الفنكشن هون
+            return;
         }
 
-        // بنشيل الخط القديم قبل ما نعمل واحد جديد
         if (this.trailLine != null) {
             this.trailLine.geometry.dispose();
             this.myScene.remove(this.trailLine);
@@ -87,12 +79,10 @@ export class BallRenderer {
     }
 
     sync(physics, showTrail, groundY = 0, options = {}) {
-        // فكينا المتغيرات بدل الاختصارات المعقدة
         let posX = physics.position.x;
         let posY = physics.position.y;
         let posZ = physics.position.z;
 
-        // تبسيط الشروط (If statements)
         let isOnTee = false;
         if (options.onTee == true) {
             isOnTee = true;
@@ -108,12 +98,10 @@ export class BallRenderer {
             isStopped = true;
         }
 
-        // تحديث مكان الكرة
         let vY = this.computeVisualY(posY, groundY, isOnTee, topOfTee, isStopped);
         this.group.position.set(posX, vY, posZ);
 
-        // تدوير الكرة حسب سرعتها الدورانية
-        let timeStep = 0.016; // تقريباً فريم واحد
+        let timeStep = 0.016; 
         
         this.mySpinAngle.x = this.mySpinAngle.x + (physics.omegax * timeStep);
         this.mySpinAngle.y = this.mySpinAngle.y + (physics.omegay * timeStep);
@@ -121,7 +109,6 @@ export class BallRenderer {
         
         this.mesh.rotation.copy(this.mySpinAngle);
 
-        // رسم خط المسار (Trail)
         if (showTrail == true && physics.stopped == false) {
             let currentTime = performance.now();
             
@@ -131,7 +118,6 @@ export class BallRenderer {
                 let newPoint = new THREE.Vector3(posX, vY, posZ);
                 this.trailPoints.push(newPoint);
                 
-                // إذا الخط صار طويل كتير، احذف أقدم نقطة
                 if (this.trailPoints.length > this.trailMax) {
                     this.trailPoints.shift(); 
                 }
@@ -144,7 +130,7 @@ export class BallRenderer {
     }
 
     clearTrail() {
-        this.trailPoints = []; // فضي المصفوفة
+        this.trailPoints = [];
         
         if (this.trailLine != null) {
             this.trailLine.geometry.dispose();
@@ -154,7 +140,6 @@ export class BallRenderer {
     }
 
     setDimpledVisual(dimpled) {
-        // حطينا if واضحة بدل علامة الاستفهام ؟
         if (dimpled == true) {
             this.mesh.material.roughness = 0.4;
             this.mesh.material.clearcoat = 0.5;

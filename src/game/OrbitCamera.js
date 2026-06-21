@@ -1,15 +1,14 @@
 import * as THREE from 'three';
 
-// كاميرا تدور حول الكرة بشكل دائري (orbit)
 export class OrbitCamera {
     constructor(camera) {
         this.camera = camera;
         this.angle = 0;
-        this.autoRotate = true;
+        this.autoRotate = true; 
     }
 
-    setAngle(rad) {
-        this.angle = rad;
+    setAngle(radians) {
+        this.angle = radians;
         this.autoRotate = false;
     }
 
@@ -17,34 +16,36 @@ export class OrbitCamera {
         this.autoRotate = enabled;
     }
 
-    update(ballPos, dt, groundY) {
-        if (this.autoRotate) {
-            this.angle = this.angle + dt * 0.55;
+    update(ballPos, deltaTime, groundY) {
+        if (this.autoRotate == true) {
+            this.angle = this.angle + deltaTime * 0.55;
         }
 
-        const dist = 11;
-        let height = ballPos.y - groundY + 3.5;
-        if (height < 4) {
-            height = 4;
+        let distanceFromBall = 11;
+
+        let cameraHeight = ballPos.y - groundY + 3.5;
+        if (cameraHeight < 4) {
+            cameraHeight = 4;
         }
 
-        const cam = this.camera;
-        const camX = ballPos.x + Math.sin(this.angle) * dist;
-        const camZ = ballPos.z + Math.cos(this.angle) * dist;
-        cam.position.set(camX, ballPos.y + height, camZ);
-        cam.up.set(0, 1, 0);
-        cam.lookAt(ballPos.x, ballPos.y + 0.15, ballPos.z);
+        let cameraX = ballPos.x + Math.sin(this.angle) * distanceFromBall;
+        let cameraZ = ballPos.z + Math.cos(this.angle) * distanceFromBall;
+
+        this.camera.position.set(cameraX, ballPos.y + cameraHeight, cameraZ);
+        this.camera.up.set(0, 1, 0);
+        this.camera.lookAt(ballPos.x, ballPos.y + 0.15, ballPos.z);
     }
 
     resetAngle(ballPos, targetPos) {
-        const dx = targetPos.x - ballPos.x;
-        const dz = targetPos.z - ballPos.z;
+        let dx = targetPos.x - ballPos.x;
+        let dz = targetPos.z - ballPos.z;
 
         if (dx * dx + dz * dz < 1e-8) {
             this.angle = 0;
         } else {
             this.angle = Math.atan2(dx, dz) + Math.PI;
         }
+
         this.autoRotate = false;
     }
 }

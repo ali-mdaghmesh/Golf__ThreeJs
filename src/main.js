@@ -15,11 +15,13 @@ const camera = new THREE.PerspectiveCamera(
     2000
 );
 
-//const app = document.getElementById('app');
+// عنصر الـ div اللي رح نحط فيه شاشة الرسم (canvas)
+const appContainer = document.getElementById('app');
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-app.appendChild(renderer.domElement);
+appContainer.appendChild(renderer.domElement);
 
 setupScene(scene, renderer);
 
@@ -32,8 +34,13 @@ let course = null;
 let game = null;
 let dashboard = null;
 
+// بتفعّل أو تعطّل التفاعل مع الماوس فوق الشاشة، حسب وضع الكاميرا الحالي
 function setCanvasPointerEvents(mode) {
-    renderer.domElement.style.pointerEvents = mode === 'free' ? 'auto' : 'none';
+    if (mode === 'free') {
+        renderer.domElement.style.pointerEvents = 'auto';
+    } else {
+        renderer.domElement.style.pointerEvents = 'none';
+    }
 }
 
 async function init() {
@@ -52,21 +59,35 @@ async function init() {
     await course.init();
 
     dashboard = new Dashboard({
-        onBeginCharge: () => game?.beginCharge(),
-        onReleaseCharge: () => game?.releaseCharge(),
-        onCancelCharge: () => game?.cancelCharge(),
-        onReset: () => {
+        onBeginCharge: function () {
+            game?.beginCharge();
+        },
+        onReleaseCharge: function () {
+            game?.releaseCharge();
+        },
+        onCancelCharge: function () {
+            game?.cancelCharge();
+        },
+        onReset: function () {
             document.getElementById('hud-win')?.classList.remove('show');
             game?.resetBall();
         },
-        onBallType: (d) => game?.setBallType(d),
-        onCameraMode: (m) => {
-            game?.setCameraMode(m);
-            setCanvasPointerEvents(m);
+        onBallType: function (dimpled) {
+            game?.setBallType(dimpled);
         },
-        onTrail: (e) => game?.setTrail(e),
-        onFollowBall: (e) => game?.setFollowBall(e),
-        onParamsChange: () => game?.onDashboardChange(),
+        onCameraMode: function (mode) {
+            game?.setCameraMode(mode);
+            setCanvasPointerEvents(mode);
+        },
+        onTrail: function (enabled) {
+            game?.setTrail(enabled);
+        },
+        onFollowBall: function (enabled) {
+            game?.setFollowBall(enabled);
+        },
+        onParamsChange: function () {
+            game?.onDashboardChange();
+        },
     });
 
     new InstructionsPanel();
@@ -84,55 +105,70 @@ async function init() {
     bindKeyboard();
 }
 
+// بتربط أزرار الكيبورد بالأكشنات بتاعت اللعبة (مسطرة = ضرب، R = إعادة الكرة)
 function bindKeyboard() {
-    window.addEventListener('keydown', (e) => {
-        if (e.target.matches('input, select, textarea, button')) return;
+    window.addEventListener('keydown', function (event) {
+        // إذا اللاعب عم يكتب جوا input أو select، ما نعمل شي
+        if (event.target.matches('input, select, textarea, button')) {
+            return;
+        }
 
-        if (e.code === 'Space') {
-            if (e.repeat) return;
-            e.preventDefault();
+        if (event.code === 'Space') {
+            if (event.repeat) {
+                return;
+            }
+            event.preventDefault();
             game?.beginChargeFromKeyboard();
         }
-        if (e.key === 'r' || e.key === 'R') {
+
+        if (event.key === 'r' || event.key === 'R') {
             game?.resetBall();
             document.getElementById('hud-win')?.classList.remove('show');
         }
     });
 
-    window.addEventListener('keyup', (e) => {
-        if (e.code === 'Space') {
-            e.preventDefault();
+    window.addEventListener('keyup', function (event) {
+        if (event.code === 'Space') {
+            event.preventDefault();
             game?.releaseChargeFromKeyboard();
         }
     });
 
-    window.addEventListener('blur', () => {
+    window.addEventListener('blur', function () {
         game?.cancelCharge();
     });
 
-    window.addEventListener('pointerup', () => {
+    window.addEventListener('pointerup', function () {
         game?.releaseCharge();
     });
 }
 
 init();
 
-window.addEventListener('resize', () => {
+window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// حلقة الرسم الرئيسية، بتنعاد كل فريم
 function animate() {
     requestAnimationFrame(animate);
-    timer.update();
-    const dt = Math.min(timer.getDelta(), 0.05);
-    const elapsed = timer.getElapsed();
 
-    if (course) course.update(elapsed);
+    timer.update();
+    let deltaTime = Math.min(timer.getDelta(), 0.05);
+    let elapsedTime = timer.getElapsed();
+
+    if (course) {
+        course.update(elapsedTime);
+    }
+
     if (game) {
-        const fc = game.cameraMode === 'free' ? flyController : null;
-        game.update(dt, fc);
+        let activeFlyController = null;
+        if (game.cameraMode === 'free') {
+            activeFlyController = flyController;
+        }
+        game.update(deltaTime, activeFlyController);
     }
 
     renderer.render(scene, camera);

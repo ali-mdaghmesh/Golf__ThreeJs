@@ -3,25 +3,20 @@ import { BallPhysics } from '../Physics/BallPhysics.js';
 import { BALL_VISUAL_SCALE } from './BallRenderer.js';
 import { computeLaunchVelocity, getAimYawRad } from './ShotAiming.js';
 
-const VISUAL_R = 0.02135 * BALL_VISUAL_SCALE;
-const VISUAL_OFFSET = VISUAL_R - 0.02135;
+const PHYSICS_RADIUS = 0.02135;
+const VISUAL_RADIUS = PHYSICS_RADIUS * BALL_VISUAL_SCALE;
+const VISUAL_OFFSET = VISUAL_RADIUS - PHYSICS_RADIUS;
 
 export class TrajectoryPreview {
     constructor(scene) {
         this.scene = scene;
         this.line = null;
-        this._mat = new THREE.LineDashedMaterial({
-            color: 0xfff59d,
-            dashSize: 0.5,
-            gapSize: 0.32,
-            transparent: true,
-            opacity: 0.88,
-            depthTest: true,
-        });
+
+        this.lineMaterial = new THREE.LineDashedMaterial();
     }
 
     hide() {
-        if (this.line) {
+        if (this.line != null) {
             this.scene.remove(this.line);
             this.line.geometry.dispose();
             this.line = null;
@@ -29,78 +24,82 @@ export class TrajectoryPreview {
     }
 
     show(physicsRef, params, holePos, getHeight, getZone) {
-        const points = this._simulate(physicsRef, params, holePos, getHeight, getZone);
+        let points = this._simulate(physicsRef, params, holePos, getHeight, getZone);
 
         this.hide();
+
         if (points.length < 2) {
             return;
         }
 
-        const geo = new THREE.BufferGeometry().setFromPoints(points);
-        this.line = new THREE.Line(geo, this._mat);
+        let geometry = new THREE.BufferGeometry().setFromPoints(points);
+        this.line = new THREE.Line(geometry, this.lineMaterial);
         this.line.computeLineDistances();
         this.line.frustumCulled = false;
         this.scene.add(this.line);
     }
 
-    // بنشغل محاكاة فيزياء كاملة بدون رسم فعلي، فقط حتى ناخد نقاط المسار
     _simulate(physicsRef, params, holePos, getHeight, getZone) {
-        const sim = new BallPhysics();
-        sim.setDimpled(params.dimpled !== false);
-        sim.setGroundCallbacks(getHeight, getZone);
+        let simulation = new BallPhysics();
+        simulation.setDimpled(params.dimpled !== false);
+        simulation.setGroundCallbacks(getHeight, getZone);
 
-        let gx = params.startX;
-        if (gx === undefined || gx === null) {
-            gx = physicsRef.x;
-        }
-        let gz = params.startZ;
-        if (gz === undefined || gz === null) {
-            gz = physicsRef.z;
+        let startX = params.startX;
+        if (startX === undefined || startX === null) {
+            startX = physicsRef.x;
         }
 
-        const gy0 = getHeight(gx, gz);
-        const aimYaw = getAimYawRad(params, gx, gz, holePos.x, holePos.z);
-        const launch = computeLaunchVelocity(params, aimYaw);
+        let startZ = params.startZ;
+        if (startZ === undefined || startZ === null) {
+            startZ = physicsRef.z;
+        }
 
-        sim.x = gx;
-        sim.z = gz;
-        sim.y = Math.max(physicsRef.y, gy0 + sim.R);
-        sim.vx = launch.vx;
-        sim.vy = launch.vy;
-        sim.vz = launch.vz;
-        sim.omegax = launch.omegax;
-        sim.omegay = launch.omegay;
-        sim.omegaz = launch.omegaz;
-        sim.stopped = false;
-        sim.t = 0;
+        let groundY = getHeight(startX, startZ);
+        let aimYaw = getAimYawRad(params, startX, startZ, holePos.x, holePos.z);
+        let launch = computeLaunchVelocity(params, aimYaw);
 
-        const pts = [];
-        let steps = 0;
-        let sample = 0;
+        simulation.x = startX;
+        simulation.z = startZ;
+        simulation.y = Math.max(physicsRef.y, groundY + simulation.R);
+        simulation.vx = launch.vx;
+        simulation.vy = launch.vy;
+        simulation.vz = launch.vz;
+        simulation.omegax = launch.omegax;
+        simulation.omegay = launch.omegay;
+        simulation.omegaz = launch.omegaz;
+        simulation.stopped = false;
+        simulation.t = 0;
 
-        // بنمشي المحاكاة خطوة خطوة، وبناخد نقطة كل كم خطوة فقط (مش كل فريم) حتى الخط ما يصير كثيف زيادة
-        while (!sim.stopped && steps < 25000) {
-            sim.update(0.001);
-            steps++;
-            sample++;
+        let points = [];
+        let stepCount = 0;
+        let sampleCount = 0;
+        let maxSteps = 25000;
+        let stepTime = 0.001;
+        let sampleEveryNSteps = 16;
 
-            if (sample % 16 !== 0) {
+        while (simulation.stopped == false && stepCount < maxSteps) {
+            simulation.update(stepTime);
+            stepCount = stepCount + 1;
+            sampleCount = sampleCount + 1;
+
+            if (sampleCount % sampleEveryNSteps !== 0) {
                 continue;
             }
 
-            const gy = getHeight(sim.x, sim.z);
-            const surfaceY = gy + VISUAL_R;
-            const airborne = sim.y > gy + sim.R + 0.015;
+            let ballGroundY = getHeight(simulation.x, simulation.z);
+            let surfaceY = ballGroundY + VISUAL_RADIUS;
+            let isAirborne = simulation.y > ballGroundY + simulation.R + 0.015;
 
-            let vy;
-            if (airborne) {
-                vy = sim.y + VISUAL_OFFSET;
+            let visualY;
+            if (isAirborne == true) {
+                visualY = simulation.y + VISUAL_OFFSET;
             } else {
-                vy = surfaceY;
+                visualY = surfaceY;
             }
 
-            pts.push(new THREE.Vector3(sim.x, vy, sim.z));
-        }        
-        return pts;
+            points.push(new THREE.Vector3(simulation.x, visualY, simulation.z));
+        }
+
+        return points;
     }
 }

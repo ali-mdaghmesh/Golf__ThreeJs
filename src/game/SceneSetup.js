@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-// بيجهز المشهد: الخلفية، الضباب، الإضاءة، وقبة السماء
 export function setupScene(scene, renderer) {
     scene.background = new THREE.Color(0x7ec8e8);
     scene.fog = new THREE.FogExp2(0xa8d4e8, 0.0018);
@@ -11,38 +10,34 @@ export function setupScene(scene, renderer) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    // إضاءة عامة من السما والأرض، بتعطي إحساس طبيعي بدون ما تكون قوية
-    const hemi = new THREE.HemisphereLight(0xb8e0ff, 0x3d6b2f, 0.55);
-    scene.add(hemi);
+    let hemisphereLight = new THREE.HemisphereLight(0xb8e0ff, 0x3d6b2f, 0.55);
+    scene.add(hemisphereLight);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.28);
-    scene.add(ambient);
+    let ambientLight = new THREE.AmbientLight(0xffffff, 0.28);
+    scene.add(ambientLight);
 
-    // ضوء الشمس الرئيسي، هو اللي بيعمل الظلال
-    const sun = new THREE.DirectionalLight(0xfff4e0, 1.35);
-    sun.position.set(80, 120, 50);
-    sun.castShadow = true;
-    sun.shadow.bias = -0.0002;
-    sun.shadow.normalBias = 0.02;
-    sun.shadow.mapSize.set(2048, 2048);
+    let sunLight = new THREE.DirectionalLight(0xfff4e0, 1.35);
+    sunLight.position.set(80, 120, 50);
+    sunLight.castShadow = true;
+    sunLight.shadow.bias = -0.0002;
+    sunLight.shadow.normalBias = 0.02;
+    sunLight.shadow.mapSize.set(2048, 2048);
 
-    const shadowCam = sun.shadow.camera;
-    shadowCam.near = 2;
-    shadowCam.far = 280;
-    shadowCam.left = -110;
-    shadowCam.right = 110;
-    shadowCam.top = 110;
-    shadowCam.bottom = -110;
-    scene.add(sun);
+    let shadowCamera = sunLight.shadow.camera;
+    shadowCamera.near = 2;
+    shadowCamera.far = 280;
+    shadowCamera.left = -110;
+    shadowCamera.right = 110;
+    shadowCamera.top = 110;
+    shadowCamera.bottom = -110;
+    scene.add(sunLight);
 
-    // ضوء خفيف ثاني من جهة تانية حتى الظل مش أسود قاتم
-    const fill = new THREE.DirectionalLight(0x88b4ff, 0.25);
-    fill.position.set(-40, 30, -60);
-    scene.add(fill);
+    let fillLight = new THREE.DirectionalLight(0x88b4ff, 0.25);
+    fillLight.position.set(-40, 30, -60);
+    scene.add(fillLight);
 
-    // كرة كبيرة معكوسة من جوا بتشكل السما، فيها تدرج لون بسيط من فوق لتحت
-    const skyGeo = new THREE.SphereGeometry(400, 32, 16);
-    const skyMat = new THREE.ShaderMaterial({
+    let skyGeometry = new THREE.SphereGeometry(400, 32, 16);
+    let skyMaterial = new THREE.ShaderMaterial({
         side: THREE.BackSide,
         depthWrite: false,
         uniforms: {
@@ -52,9 +47,9 @@ export function setupScene(scene, renderer) {
         vertexShader: `
             varying vec3 vWorld;
             void main() {
-                vec4 w = modelMatrix * vec4(position, 1.0);
-                vWorld = w.xyz;
-                gl_Position = projectionMatrix * viewMatrix * w;
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vWorld = worldPosition.xyz;
+                gl_Position = projectionMatrix * viewMatrix * worldPosition;
             }
         `,
         fragmentShader: `
@@ -62,14 +57,15 @@ export function setupScene(scene, renderer) {
             uniform vec3 bottomColor;
             varying vec3 vWorld;
             void main() {
-                float h = normalize(vWorld).y * 0.5 + 0.5;
-                gl_FragColor = vec4(mix(bottomColor, topColor, pow(h, 0.85)), 1.0);
+                float heightFactor = normalize(vWorld).y * 0.5 + 0.5;
+                gl_FragColor = vec4(mix(bottomColor, topColor, pow(heightFactor, 0.85)), 1.0);
             }
         `,
     });
-    const sky = new THREE.Mesh(skyGeo, skyMat);
-    sky.name = 'SkyDome';
-    scene.add(sky);
 
-    return { sun, hemi };
+    let skyDome = new THREE.Mesh(skyGeometry, skyMaterial);
+    skyDome.name = 'SkyDome';
+    scene.add(skyDome);
+
+    return { sun: sunLight, hemi: hemisphereLight };
 }

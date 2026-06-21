@@ -1,9 +1,18 @@
 export class WorldBounds {
-    constructor({ halfWidth, halfDepth, margin = 2, minCameraY = 0.5 }) {
-        this.halfWidth = halfWidth;
-        this.halfDepth = halfDepth;
-        this.margin = margin;
-        this.minCameraY = minCameraY;
+    constructor(options) {
+        this.halfWidth = options.halfWidth;
+        this.halfDepth = options.halfDepth;
+
+        this.margin = options.margin;
+        if (this.margin === undefined) {
+            this.margin = 2;
+        }
+
+        this.minCameraY = options.minCameraY;
+        if (this.minCameraY === undefined) {
+            this.minCameraY = 0.5;
+        }
+
         this.getGroundHeight = null;
     }
 
@@ -13,42 +22,41 @@ export class WorldBounds {
 
     // بيقص الإحداثيات حتى تضل جوا حدود الملعب
     clampXZ(x, z) {
-        const maxX = this.halfWidth - this.margin;
-        const maxZ = this.halfDepth - this.margin;
+        let maxX = this.halfWidth - this.margin;
+        let maxZ = this.halfDepth - this.margin;
 
         let clampedX = x;
-        if (clampedX > maxX){
-             clampedX = maxX;
+        if (clampedX > maxX) {
+            clampedX = maxX;
         }
-        if (clampedX < -maxX){
+        if (clampedX < -maxX) {
             clampedX = -maxX;
         }
 
         let clampedZ = z;
-        
-        if (clampedZ > maxZ){
+        if (clampedZ > maxZ) {
             clampedZ = maxZ;
         }
-        if (clampedZ < -maxZ){
-
-        } 
+        if (clampedZ < -maxZ) {
+            clampedZ = -maxZ;
+        }
 
         return { x: clampedX, z: clampedZ };
     }
 
     clampBall(physics) {
-        const result = this.clampXZ(physics.x, physics.z);
+        let result = this.clampXZ(physics.x, physics.z);
         physics.x = result.x;
         physics.z = result.z;
 
-        let gy = 0;
+        let groundY = 0;
         if (this.getGroundHeight) {
-            gy = this.getGroundHeight(result.x, result.z);
+            groundY = this.getGroundHeight(result.x, result.z);
         }
 
-        const floor = gy + physics.R;
-        if (physics.y < floor) {
-            physics.y = floor;
+        let floorY = groundY + physics.R;
+        if (physics.y < floorY) {
+            physics.y = floorY;
             if (physics.vy < 0) {
                 physics.vy = 0;
             }
@@ -56,24 +64,24 @@ export class WorldBounds {
     }
 
     clampCamera(camera) {
-        const result = this.clampXZ(camera.position.x, camera.position.z);
+        let result = this.clampXZ(camera.position.x, camera.position.z);
         camera.position.x = result.x;
         camera.position.z = result.z;
 
-        let gy = 0;
+        let groundY = 0;
         if (this.getGroundHeight) {
-            gy = this.getGroundHeight(camera.position.x, camera.position.z);
+            groundY = this.getGroundHeight(camera.position.x, camera.position.z);
         }
 
-        const minY = gy + this.minCameraY;
+        let minY = groundY + this.minCameraY;
         if (camera.position.y < minY) {
             camera.position.y = minY;
         }
     }
 
     isOutOfBounds(x, z) {
-        const maxX = this.halfWidth - this.margin;
-        const maxZ = this.halfDepth - this.margin;
+        let maxX = this.halfWidth - this.margin;
+        let maxZ = this.halfDepth - this.margin;
         return Math.abs(x) > maxX || Math.abs(z) > maxZ;
     }
 }

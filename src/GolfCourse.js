@@ -5,7 +5,6 @@
  */
 
 import * as THREE from 'three';
-import { createProceduralGrassTexture } from './game/ProceduralGroundTexture.js';
 
 export const ZONE = Object.freeze({
     TEE     : 'tee',
@@ -363,29 +362,18 @@ export class GolfCourse {
         let mat;
 
         if (tx.grass) {
-            // ✅ Texture only — NO vertex colors to avoid dark/light patches
-            mat = new THREE.MeshStandardMaterial({
-                map         : tx.grass,
-                normalMap   : tx.grassNorm  ?? undefined,
-                roughnessMap: tx.grassRough ?? undefined,
-                roughness   : tx.grassRough ? 1.0 : 0.85,
-                metalness   : 0.0,
-                // No vertexColors — keeps texture uniform across the whole terrain
-            });
-        } else {
-            // No external textures: generate a realistic procedural grass texture
-            const grassTex = createProceduralGrassTexture({
-                size: 1024,
-                seed: this.opt.noiseSeed ?? 1337,
-                repeat: this.opt.textureRepeat ?? 14,
-            });
-
-            mat = new THREE.MeshStandardMaterial({
-                map: grassTex,
-                roughness: 0.95,
-                metalness: 0.0,
-            });
-        }
+        mat = new THREE.MeshStandardMaterial({
+            map: tx.grass,
+            roughness: 0.85,
+            metalness: 0.0,
+        });
+    } else {
+        mat = new THREE.MeshStandardMaterial({
+            color: 0x2f7a2b,  // أخضر عشب بسيط
+            roughness: 0.95,
+            metalness: 0.0,
+        });
+    }
 
         this.terrainMesh = new THREE.Mesh(geo, mat);
         this.terrainMesh.receiveShadow = true;

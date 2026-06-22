@@ -48,12 +48,13 @@ async function init() {
         width: 400,
         depth: 400,
         segments: 128,
-        maxHeight: 0,
-        textureRepeat: 14,
+        maxHeight: 10,
+        textureRepeat: 140,
         grassCount: 1800,
         holeCount: 1,
         showBunkers: true,
         showWater: false,
+        grassTexturePath: '../Textures/sand.jpg',
     });
 
     await course.init();

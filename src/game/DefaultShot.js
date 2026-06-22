@@ -1,10 +1,10 @@
 export const DEFAULT_SHOT_TEMPLATE = {
-    v0: 23,
-    thetaDeg: 8.1,
+    v0: 21,
+    thetaDeg: 8,
     vz0: 0,
     omegax: 0,
     omegay: 0,
-    omegaz: 91.5,
+    omegaz: 90,
     aimYawDeg: 0,
     viewYawDeg: 0,
     dimpled: true,

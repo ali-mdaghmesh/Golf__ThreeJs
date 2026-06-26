@@ -3,7 +3,6 @@ import { FlyController } from './Controller/FlyController.js';
 import { GolfCourse } from './GolfCourse.js';
 import { GolfGame } from './game/GolfGame.js';
 import { Dashboard } from './ui/Dashboard.js';
-import { InstructionsPanel } from './ui/InstructionsPanel.js';
 import { setupScene } from './game/SceneSetup.js';
 
 const scene = new THREE.Scene();
@@ -15,7 +14,6 @@ const camera = new THREE.PerspectiveCamera(
     2000
 );
 
-// عنصر الـ div اللي رح نحط فيه شاشة الرسم (canvas)
 const appContainer = document.getElementById('app');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -34,7 +32,6 @@ let course = null;
 let game = null;
 let dashboard = null;
 
-// بتفعّل أو تعطّل التفاعل مع الماوس فوق الشاشة، حسب وضع الكاميرا الحالي
 function setCanvasPointerEvents(mode) {
     if (mode === 'free') {
         renderer.domElement.style.pointerEvents = 'auto';
@@ -96,7 +93,6 @@ async function init() {
     },
 });
 
-    new InstructionsPanel();
 
     game = new GolfGame({
         scene,
@@ -112,10 +108,8 @@ async function init() {
 
 
 
-// بتربط أزرار الكيبورد بالأكشنات بتاعت اللعبة (مسطرة = ضرب، R = إعادة الكرة)
 function bindKeyboard() {
     window.addEventListener('keydown', function (event) {
-        // إذا اللاعب عم يكتب جوا input أو select، ما نعمل شي
         if (event.target.matches('input, select, textarea, button')) {
             return;
         }
@@ -158,7 +152,6 @@ window.addEventListener('resize', function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// حلقة الرسم الرئيسية، بتنعاد كل فريم
 function animate() {
     requestAnimationFrame(animate);
 

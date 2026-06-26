@@ -280,7 +280,7 @@ body {
   background: rgba(67, 160, 71, 0.45);
 }
 
-#camera-mode {
+#camera-mode, #ground-type {
   width: 100%;
   margin-top: 0.35rem;
   padding: 0.4rem;

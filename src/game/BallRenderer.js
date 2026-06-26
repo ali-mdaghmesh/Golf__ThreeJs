@@ -45,7 +45,7 @@ export class BallRenderer {
         
         if (stopped == true) {
             onGround = true;
-        } else if (physicsY <= contact + 0.008) {
+        } else if (physicsY <= contact) {
             onGround = true;
         }
 

@@ -1,8 +1,5 @@
 import * as THREE from 'three';
 
-/**
- * كاميرا حرّة — يaw/pitch منفصلان عن lookAt لتجنب الانقلاب
- */
 export class FlyController {
     constructor(camera, domElement, speed = 14) {
         this.camera = camera;

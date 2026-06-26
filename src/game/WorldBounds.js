@@ -79,9 +79,4 @@ export class WorldBounds {
         }
     }
 
-    isOutOfBounds(x, z) {
-        let maxX = this.halfWidth - this.margin;
-        let maxZ = this.halfDepth - this.margin;
-        return Math.abs(x) > maxX || Math.abs(z) > maxZ;
-    }
 }

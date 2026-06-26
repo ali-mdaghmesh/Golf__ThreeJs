@@ -721,4 +721,40 @@ export class GolfCourse {
         }
         return { x: (Math.random() - 0.5) * width, z: (Math.random() - 0.5) * depth };
     }
+
+setGroundTexture(type) {
+    if (this.terrainMesh == null) {
+        return;
+    }
+
+    let tx = this._textures;
+    let mat = this.terrainMesh.material;
+
+    mat.color.set(0xffffff);
+
+    if (type === 'sand') {
+        if (tx.sand) {
+            mat.map = tx.sand;
+        } else {
+            mat.map = null;
+            mat.color.set(0xc2a869); 
+        }
+    } else if (type === 'tallGrass') {
+        if (tx.rough) {
+            mat.map = tx.rough;
+        } else {
+            mat.map = null;
+            mat.color.set(0x2d5a1b);
+        }
+    } else {
+        if (tx.grass) {
+            mat.map = tx.grass;
+        } else {
+            mat.map = null;
+            mat.color.set(0x2f7a2b); 
+        }
+    }
+
+    mat.needsUpdate = true;
+}
 }

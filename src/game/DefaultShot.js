@@ -1,5 +1,5 @@
 export const DEFAULT_SHOT_TEMPLATE = {
-    v0: 21,
+    v0: 42,
     thetaDeg: 8,
     vz0: 0,
     omegax: 0,

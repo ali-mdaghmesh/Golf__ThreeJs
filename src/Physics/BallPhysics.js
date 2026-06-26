@@ -21,6 +21,7 @@ export class BallPhysics {
         this.ground = new GroundMaterial(); 
         this.getGroundHeight = null;
         this.getZoneAt = null;
+        this.groundType = 'shortGrass';
 
         this.resetState();
         this._accumulator = 0;
@@ -97,16 +98,18 @@ export class BallPhysics {
     }
 
     _applyZoneFriction() {
-        if (!this.getZoneAt) return;
-        const zone = this.getZoneAt(this.x, this.z);
-        switch (zone) {
-            case 'green': this.ground.setGreen(); break;
-            case 'fairway': this.ground.setFairway(); break;
-            case 'rough': this.ground.setRough(); break;
-            case 'bunker': this.ground.setBunker(); break;
-            default: this.ground.setGrass();
-        }
+    if (this.groundType === 'sand') {
+        this.ground.setBunker();
+    } else if (this.groundType === 'tallGrass') {
+        this.ground.setRough();
+    } else {
+        this.ground.setGreen();
     }
+}
+
+    setGroundType(type) {
+    this.groundType = type;
+}
 
     update(frameDt) {
         if (this.stopped) return;
@@ -283,7 +286,4 @@ export class BallPhysics {
         return Math.hypot(this.vx, this.vy, this.vz);
     }
 
-    get distanceFromOrigin() {
-        return Math.hypot(this.x, this.z);
-    }
 }

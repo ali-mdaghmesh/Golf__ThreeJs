@@ -45,51 +45,56 @@ function setCanvasPointerEvents(mode) {
 
 async function init() {
     course = new GolfCourse(scene, {
-        width: 400,
-        depth: 400,
-        segments: 128,
-        maxHeight: 10,
-        textureRepeat: 140,
-        grassCount: 1800,
-        holeCount: 1,
-        showBunkers: true,
-        showWater: false,
-        grassTexturePath: '../Textures/sand.jpg',
-    });
+    width: 400,
+    depth: 400,
+    segments: 128,
+    maxHeight: 10,
+    textureRepeat: 140,
+    grassCount: 1800,
+    holeCount: 1,
+    showBunkers: true,
+    showWater: false,
+    grassTexturePath: '/Textures/grass3.avif',
+    sandTexturePath: '../Textures/sand.jpg',
+});
 
     await course.init();
 
     dashboard = new Dashboard({
-        onBeginCharge: function () {
-            game?.beginCharge();
-        },
-        onReleaseCharge: function () {
-            game?.releaseCharge();
-        },
-        onCancelCharge: function () {
-            game?.cancelCharge();
-        },
-        onReset: function () {
-            document.getElementById('hud-win')?.classList.remove('show');
-            game?.resetBall();
-        },
-        onBallType: function (dimpled) {
-            game?.setBallType(dimpled);
-        },
-        onCameraMode: function (mode) {
-            game?.setCameraMode(mode);
-            setCanvasPointerEvents(mode);
-        },
-        onTrail: function (enabled) {
-            game?.setTrail(enabled);
-        },
-        onFollowBall: function (enabled) {
-            game?.setFollowBall(enabled);
-        },
-        onParamsChange: function () {
-            game?.onDashboardChange();
-        },
-    });
+    onBeginCharge: function () {
+        if (game) { game.beginCharge(); }
+    },
+    onReleaseCharge: function () {
+        if (game) { game.releaseCharge(); }
+    },
+    onCancelCharge: function () {
+        if (game) { game.cancelCharge(); }
+    },
+    onReset: function () {
+        let winEl = document.getElementById('hud-win');
+        if (winEl) { winEl.classList.remove('show'); }
+        if (game) { game.resetBall(); }
+    },
+    onBallType: function (dimpled) {
+        if (game) { game.setBallType(dimpled); }
+    },
+    onGroundType: function (type) {
+    if (game) { game.setGroundType(type); }
+},
+    onCameraMode: function (mode) {
+        if (game) { game.setCameraMode(mode); }
+        setCanvasPointerEvents(mode);
+    },
+    onTrail: function (enabled) {
+        if (game) { game.setTrail(enabled); }
+    },
+    onFollowBall: function (enabled) {
+        if (game) { game.setFollowBall(enabled); }
+    },
+    onParamsChange: function () {
+        if (game) { game.onDashboardChange(); }
+    },
+});
 
     new InstructionsPanel();
 
@@ -101,10 +106,11 @@ async function init() {
         flyController,
     });
     await game.init();
-
     setCanvasPointerEvents('follow');
     bindKeyboard();
 }
+
+
 
 // بتربط أزرار الكيبورد بالأكشنات بتاعت اللعبة (مسطرة = ضرب، R = إعادة الكرة)
 function bindKeyboard() {

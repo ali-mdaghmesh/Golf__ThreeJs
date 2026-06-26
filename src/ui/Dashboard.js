@@ -137,6 +137,47 @@ export class Dashboard {
         let dimpledBox = document.getElementById('ball-dimpled');
         let smoothBox = document.getElementById('ball-smooth');
 
+        //
+
+        let groundSelect = document.getElementById('ground-type');
+        if (groundSelect != null) {
+            groundSelect.addEventListener('change', function() {
+                if (self.callbacks.onGroundType) {
+                    self.callbacks.onGroundType(groundSelect.value);
+                }
+            });
+        }
+
+        // --- وضع الكاميرا ---
+let cameraModeSelect = document.getElementById('camera-mode');
+if (cameraModeSelect != null) {
+    cameraModeSelect.addEventListener('change', function() {
+        if (self.callbacks.onCameraMode) {
+            self.callbacks.onCameraMode(cameraModeSelect.value);
+        }
+    });
+}
+
+// --- مسار الكرة ---
+let trailBox = document.getElementById('opt-trail');
+if (trailBox != null) {
+    trailBox.addEventListener('change', function() {
+        if (self.callbacks.onTrail) {
+            self.callbacks.onTrail(trailBox.checked);
+        }
+    });
+}
+
+// --- متابعة الكرة ---
+let followBox = document.getElementById('opt-follow');
+if (followBox != null) {
+    followBox.addEventListener('change', function() {
+        if (self.callbacks.onFollowBall) {
+            self.callbacks.onFollowBall(followBox.checked);
+        }
+    });
+}
+
         if (dimpledBox != null) {
             dimpledBox.addEventListener('change', function(event) {
                 self.userChangedSomething = true;
@@ -243,12 +284,11 @@ export class Dashboard {
         let el = document.getElementById('stats-readout');
         if (el != null) {
             el.innerHTML = 
+                
                 "<div><span>السرعة</span><strong>" + stats.speed.toFixed(2) + " م/ث</strong></div>" +
                 "<div><span>الارتفاع</span><strong>" + stats.height.toFixed(2) + " م</strong></div>" +
-                "<div><span>المسافة الأفقية</span><strong>" + stats.carry.toFixed(1) + " م</strong></div>" +
-                "<div><span>الارتدادات</span><strong>" + stats.bounces + "</strong></div>" +
-                "<div><span>الزمن</span><strong>" + stats.time.toFixed(2) + " ث</strong></div>" +
-                "<div><span>الحالة</span><strong>" + stats.state + "</strong></div>";
+                "<div><span>المسافة الأفقية</span><strong>" + stats.carry.toFixed(1) + " م</strong></div>"
+
         }
     }
 }

@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const gltfLoader = new GLTFLoader();
 
-// دالة بسيطة بتحمّل موديل GLTF من مسار معين وبترجعه كـ Promise
 function loadGltf(path) {
     return new Promise(function (resolve, reject) {
         gltfLoader.load(
@@ -19,8 +18,6 @@ function loadGltf(path) {
     });
 }
 
-// بناخد ارتفاع الموديل الأصلي، ونعمله scale حتى يطلع بالارتفاع المطلوب
-// وبعدين ننزله لتحت لحتى قاعدته تلمس بالضبط y = 0
 function fitModelToGround(model, targetHeight) {
     let box = new THREE.Box3().setFromObject(model);
     let size = new THREE.Vector3();
@@ -32,15 +29,13 @@ function fitModelToGround(model, targetHeight) {
     }
     model.scale.setScalar(targetHeight / originalHeight);
 
-    // بعد ما عملنا scale لازم نعيد حساب الصندوق (box) لأنه تغير حجمه
+
     box.setFromObject(model);
     model.position.y = -box.min.y;
 
     return box;
 }
 
-// هاد الكلاس مسؤول عن كل الأشياء المرسومة حوالين الملعب:
-// الوتد (tee)، عصا الغولف، الحفرة، شخصية اللاعب، وحزم العشب
 export class CourseDecorations {
     constructor(scene, course) {
         this.scene = scene;
@@ -59,10 +54,8 @@ export class CourseDecorations {
         this.grassMeshes = [];
 
         this._strokeDir = new THREE.Vector3(0, 0, 1);
-        this._playerFeetOffset = 0;
     }
 
-    // بتحمّل كل الموديلات (nail, club, hole, player, grass) وتحطهم بمكانهم بالمشهد
     async loadAll() {
         let holePosition = this.course.getHolePosition();
         this.holePos.set(holePosition.x, holePosition.y, holePosition.z);
@@ -98,33 +91,18 @@ export class CourseDecorations {
         this.scene.add(hole);
         this.hole = hole;
 
-        // شخصية اللاعب
         let player = await loadGltf('./Models/golf_player/scene.gltf');
         fitModelToGround(player, 2.05);
         player.rotation.order = 'YXZ';
-        this._playerFeetOffset = 0;
         this.player = player;
         this.scene.add(player);
         this.showPlayer(true);
 
-        // كم حزمة عشب عشوائية حوالين الملعب لإضافة تفاصيل بصرية بسيطة
         let grassTemplate = await loadGltf('./Models/grass/scene.gltf');
         fitModelToGround(grassTemplate, 0.35);
+        this._grassTemplate = grassTemplate; 
 
-        let grassCount = 12;
-        for (let i = 0; i < grassCount; i++) {
-            let grassClone = grassTemplate.clone();
-
-            let x = (Math.random() - 0.5) * 70;
-            let z = (Math.random() - 0.5) * 140;
-
-            grassClone.position.set(x, this.course.getHeightAt(x, z), z);
-            grassClone.rotation.y = Math.random() * Math.PI * 2;
-            grassClone.scale.multiplyScalar(0.7 + Math.random() * 0.5);
-
-            this.scene.add(grassClone);
-            this.grassMeshes.push(grassClone);
-        }
+        this.setGrassCount(12);
 
         let teeGroundY2 = this.course.getHeightAt(this.teeAnchor.x, this.teeAnchor.z);
         this.positionForStroke(this.teeAnchor.x, this.teeAnchor.z, 0, teeGroundY2, true);
@@ -151,11 +129,9 @@ export class CourseDecorations {
         this.showClub(visible);
     }
 
-    // بتحط العصا واللاعب بمكانهم الصح حسب موقع الكرة واتجاه الضربة
     positionForStroke(ballX, ballZ, aimYawRad, groundY, atTee = false) {
         this._strokeDir.set(Math.sin(aimYawRad), 0, Math.cos(aimYawRad));
 
-        // المحور الجانبي (يمين/شمال) بناءً على اتجاه الضربة
         let sideX = this._strokeDir.z;
         let sideZ = -this._strokeDir.x;
 
@@ -179,14 +155,11 @@ export class CourseDecorations {
             let teeGroundY = this.course.getHeightAt(teePosition.x, teePosition.z);
             this.nail.position.set(teePosition.x + 0.03, teeGroundY + 0.08, teePosition.z);
 
-            // ملاحظة: تركت هاد السطر معلق لأنه كان يسبب مشكلة بارتفاع الكرة، خليه هيك حالياً
-            // this.teeTopY = box.max.y + this.nail.position.y;
 
             this.teeAnchor.set(teePosition.x, this.teeTopY, teePosition.z);
         }
     }
 
-    // بتحدد وضعية العصا أثناء الضربة: سحب للخلف (back) أو ضرب لقدام (swingT)
     setSwingPose(back = 0, swingT = 0) {
         let forwardAmount = 0;
         if (swingT > 0) {
@@ -213,6 +186,28 @@ export class CourseDecorations {
 
         let shaftOffset = 0.36;
         this.club.position.set(shaftOffset, 0.2, -distance);
+    }
+
+    setGrassCount(count) {
+        for (let i = 0; i < this.grassMeshes.length; i++) {
+            this.scene.remove(this.grassMeshes[i]);
+        }
+        this.grassMeshes = [];
+
+        if (this._grassTemplate == null) {
+            return;
+        }
+
+        for (let i = 0; i < count; i++) {
+            let grassClone = this._grassTemplate.clone();
+            let x = (Math.random() - 0.5) * 70;
+            let z = (Math.random() - 0.5) * 140;
+            grassClone.position.set(x, this.course.getHeightAt(x, z), z);
+            grassClone.rotation.y = Math.random() * Math.PI * 2;
+            grassClone.scale.multiplyScalar(0.7 + Math.random() * 0.5);
+            this.scene.add(grassClone);
+            this.grassMeshes.push(grassClone);
+        }
     }
 
     getTeeAnchor() {

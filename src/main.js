@@ -119,28 +119,28 @@ function bindKeyboard() {
                 return;
             }
             event.preventDefault();
-            game?.beginChargeFromKeyboard();
+            game.beginChargeFromKeyboard();
         }
 
         if (event.key === 'r' || event.key === 'R') {
-            game?.resetBall();
-            document.getElementById('hud-win')?.classList.remove('show');
+            game.resetBall();
+            document.getElementById('hud-win').classList.remove('show');
         }
     });
 
     window.addEventListener('keyup', function (event) {
         if (event.code === 'Space') {
             event.preventDefault();
-            game?.releaseChargeFromKeyboard();
+            game.releaseChargeFromKeyboard();
         }
     });
 
     window.addEventListener('blur', function () {
-        game?.cancelCharge();
+        game.cancelCharge();
     });
 
     window.addEventListener('pointerup', function () {
-        game?.releaseCharge();
+        game.releaseCharge();
     });
 }
 

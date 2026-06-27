@@ -139,13 +139,5 @@ export class BallRenderer {
         }
     }
 
-    setDimpledVisual(dimpled) {
-        if (dimpled == true) {
-            this.mesh.material.roughness = 0.4;
-            this.mesh.material.clearcoat = 0.5;
-        } else {
-            this.mesh.material.roughness = 0.2;
-            this.mesh.material.clearcoat = 0.25;
-        }
-    }
+    
 }

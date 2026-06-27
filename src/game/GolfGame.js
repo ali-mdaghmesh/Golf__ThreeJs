@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { BallPhysics } from '../Physics/BallPhysics.js';
 import { BallRenderer } from './BallRenderer.js';
 import { WorldBounds } from './WorldBounds.js';
-import { ChaseCamera } from './ChaseCamera.js';
+import { ChaseCamera } from '../Controller/ChaseCamera.js';
 import { OrbitCamera } from '../Controller/OrbitCamera.js'
 import { CourseDecorations } from './CourseDecorations.js';
 import { TrajectoryPreview } from './TrajectoryPreview.js';
@@ -371,7 +371,6 @@ export class GolfGame {
         this.decorations.showClub(false);
 
         this.physics.setDimpled(params.dimpled !== false);
-        this.ball.setDimpledVisual(this.physics.dimpled);
 
         let aimYaw = this._getAimYaw(params);
         let launch = computeLaunchVelocity(params, aimYaw);
@@ -438,7 +437,6 @@ export class GolfGame {
 
     setBallType(dimpled) {
         this.physics.setDimpled(dimpled);
-        this.ball.setDimpledVisual(dimpled);
         this.updateAimPreview();
     }
 
@@ -634,20 +632,6 @@ export class GolfGame {
         let holeDz = ballPosition.z - this.holePosition.z;
         let distanceToHole = Math.sqrt(holeDx * holeDx + holeDz * holeDz);
 
-        let state;
-        if (this._inCup) {
-            state = 'في الحفرة';
-        } else if (this.physics.stopped) {
-            state = 'جاهزة للضربة';
-        } else {
-            state = 'طيران';
-        }
-
-        if (this._phase === PHASE.CHARGING) {
-            state = 'سحب العصا...';
-        } else if (this._phase === PHASE.SWINGING) {
-            state = 'ضربة...';
-        }
 
         if (this.dashboard) {
             this.dashboard.updateStats({
@@ -656,7 +640,6 @@ export class GolfGame {
                 carry: carryDistance,
                 bounces: this.physics.bounceCount,
                 time: this.physics.t,
-                state: state,
                 strokes: this._strokeCount,
             });
         }

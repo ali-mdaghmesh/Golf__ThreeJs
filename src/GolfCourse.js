@@ -737,14 +737,14 @@ setGroundTexture(type) {
             mat.map = tx.sand;
         } else {
             mat.map = null;
-            mat.color.set(0xc2a869); 
+            mat.color.set(0x2f7a2b); 
         }
     } else if (type === 'tallGrass') {
-        if (tx.rough) {
-            mat.map = tx.rough;
+         if (tx.grass) {
+            mat.map = tx.grass;
         } else {
             mat.map = null;
-            mat.color.set(0x2d5a1b);
+            mat.color.set(0x2f7a2b); 
         }
     } else {
         if (tx.grass) {

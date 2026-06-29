@@ -1,9 +1,3 @@
-/**
- * ============================================================
- *  GolfCourse.js  —  Golf Course Terrain System for Three.js
- * ============================================================
- */
-
 import * as THREE from 'three';
 
 export const ZONE = Object.freeze({

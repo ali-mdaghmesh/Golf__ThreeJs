@@ -3,64 +3,68 @@ import * as THREE from 'three';
 export class ChaseCamera {
     constructor(camera) {
         this.camera = camera;
-
-        this.position = new THREE.Vector3();
-        this.lookAt = new THREE.Vector3();
-
+        this.currentPosition = new THREE.Vector3();
+        this.currentLookAt = new THREE.Vector3();
         this.isFirstUpdate = true;
     }
 
-    update(ballPos, velocity, groundY, holePos, deltaTime) {
+    update(ballPosition, velocity, groundY, holePosition, deltaTime) {
         let speed = Math.sqrt(
-            velocity.vx * velocity.vx +
-            velocity.vy * velocity.vy +
+            velocity.vx * velocity.vx + 
+            velocity.vy * velocity.vy + 
             velocity.vz * velocity.vz
         );
 
-        let forwardDir = new THREE.Vector3(velocity.vx, 0, velocity.vz);
+        let forwardDirection = new THREE.Vector3(velocity.vx, 0, velocity.vz);
 
-        if (forwardDir.lengthSq() < 0.25) {
-            forwardDir.set(
-                holePos.x - ballPos.x,
-                0,
-                holePos.z - ballPos.z
+        if (forwardDirection.lengthSq() < 0.25) {
+            forwardDirection.set(
+                holePosition.x - ballPosition.x, 
+                0, 
+                holePosition.z - ballPosition.z
             );
         }
 
-        if (forwardDir.lengthSq() < 0.01) {
-            forwardDir.set(0, 0, 1);
+        if (forwardDirection.lengthSq() < 0.01) {
+            forwardDirection.set(0, 0, 1);
         }
 
-        forwardDir.normalize();
+        forwardDirection.normalize();
 
-        let upDir = new THREE.Vector3(0, 1, 0);
-        let rightDir = new THREE.Vector3();
-        rightDir.crossVectors(forwardDir, upDir);
-        rightDir.normalize();
+        let upDirection = new THREE.Vector3(0, 1, 0);
+        let rightDirection = new THREE.Vector3();
+        rightDirection.crossVectors(forwardDirection, upDirection);
+        rightDirection.normalize();
 
-        let speedFactorDistance = Math.min(1, speed / 40);
-        let speedFactorHeight = Math.min(1, speed / 35);
-
-        let distanceBehind = THREE.MathUtils.lerp(5, 11, speedFactorDistance);
-        let cameraHeight = THREE.MathUtils.lerp(2.8, 5, speedFactorHeight);
-
-        let ballHeightAboveGround = ballPos.y - groundY - 0.15;
-        if (ballHeightAboveGround < 0) {
-            ballHeightAboveGround = 0;
+        let distanceFactor = speed / 40;
+        if (distanceFactor > 1) {
+            distanceFactor = 1;
         }
-        cameraHeight += ballHeightAboveGround * 0.25;
+
+        let heightFactor = speed / 35;
+        if (heightFactor > 1) {
+            heightFactor = 1;
+        }
+
+        let distanceBehind = 5 + (11 - 5) * distanceFactor;
+        let cameraHeight = 2.8 + (5 - 2.8) * heightFactor;
+
+        let ballHeight = ballPosition.y - groundY - 0.15;
+        if (ballHeight < 0) {
+            ballHeight = 0;
+        }
+        cameraHeight = cameraHeight + ballHeight * 0.25;
 
         let sideOffset = 1.2;
 
-        let desiredPos = new THREE.Vector3();
-        desiredPos.copy(ballPos);
-        desiredPos.addScaledVector(forwardDir, -distanceBehind);
-        desiredPos.addScaledVector(upDir, cameraHeight);
-        desiredPos.addScaledVector(rightDir, sideOffset);
+        let targetPosition = new THREE.Vector3();
+        targetPosition.copy(ballPosition);
+        targetPosition.x = targetPosition.x - forwardDirection.x * distanceBehind + rightDirection.x * sideOffset;
+        targetPosition.y = targetPosition.y + upDirection.y * cameraHeight;
+        targetPosition.z = targetPosition.z - forwardDirection.z * distanceBehind + rightDirection.z * sideOffset;
 
-        let minCameraY = groundY + 1.5;
-        if (desiredPos.y < minCameraY) {
-            desiredPos.y = minCameraY;
+        if (targetPosition.y < groundY + 1.5) {
+            targetPosition.y = groundY + 1.5;
         }
 
         let lookAheadDistance = 4;
@@ -68,59 +72,67 @@ export class ChaseCamera {
             lookAheadDistance = 10;
         }
 
-        let desiredLookAt = new THREE.Vector3();
-        desiredLookAt.copy(ballPos);
-        desiredLookAt.addScaledVector(forwardDir, lookAheadDistance);
-        desiredLookAt.add(new THREE.Vector3(0, 0.2, 0));
+        let targetLookAt = new THREE.Vector3();
+        targetLookAt.copy(ballPosition);
+        targetLookAt.x = targetLookAt.x + forwardDirection.x * lookAheadDistance;
+        targetLookAt.y = targetLookAt.y + 0.2;
+        targetLookAt.z = targetLookAt.z + forwardDirection.z * lookAheadDistance;
 
         if (this.isFirstUpdate == true) {
-            this.position.copy(desiredPos);
-            this.lookAt.copy(desiredLookAt);
+            this.currentPosition.copy(targetPosition);
+            this.currentLookAt.copy(targetLookAt);
             this.isFirstUpdate = false;
         }
 
-        let smoothAmount = 1 - Math.exp(-4.5 * deltaTime);
-        this.position.lerp(desiredPos, smoothAmount);
-        this.lookAt.lerp(desiredLookAt, smoothAmount * 1.1);
+        let smoothValue = deltaTime * 4.5;
+        if (smoothValue > 1) {
+            smoothValue = 1;
+        }
 
-        this.camera.position.copy(this.position);
+        this.currentPosition.lerp(targetPosition, smoothValue);
+        this.currentLookAt.lerp(targetLookAt, smoothValue);
+
+        this.camera.position.copy(this.currentPosition);
         this.camera.up.set(0, 1, 0);
-        this.camera.lookAt(this.lookAt);
+        this.camera.lookAt(this.currentLookAt);
     }
 
-    snapToTee(ballPos, holePos, groundY) {
-        let dirToHole = new THREE.Vector3(
-            holePos.x - ballPos.x,
-            0,
-            holePos.z - ballPos.z
+    snapToTee(ballPosition, holePosition, groundY) {
+        let directionToHole = new THREE.Vector3(
+            holePosition.x - ballPosition.x, 
+            0, 
+            holePosition.z - ballPosition.z
         );
 
-        if (dirToHole.lengthSq() < 0.01) {
-            dirToHole.set(0, 0, 1);
+        if (directionToHole.lengthSq() < 0.01) {
+            directionToHole.set(0, 0, 1);
         }
-        dirToHole.normalize();
+        directionToHole.normalize();
 
         let distanceBack = 5.5;
-        let heightAbove = 2.8;
+        let heightValue = 2.8;
 
-        let cameraY = Math.max(groundY + heightAbove, ballPos.y + 1.5);
+        let cameraY = groundY + heightValue;
+        if (ballPosition.y + 1.5 > cameraY) {
+            cameraY = ballPosition.y + 1.5;
+        }
 
-        this.position.set(
-            ballPos.x - dirToHole.x * distanceBack,
+        this.currentPosition.set(
+            ballPosition.x - directionToHole.x * distanceBack,
             cameraY,
-            ballPos.z - dirToHole.z * distanceBack
+            ballPosition.z - directionToHole.z * distanceBack
         );
 
-        this.lookAt.set(
-            ballPos.x + dirToHole.x * 12,
-            ballPos.y + 0.15,
-            ballPos.z + dirToHole.z * 12
+        this.currentLookAt.set(
+            ballPosition.x + directionToHole.x * 12,
+            ballPosition.y + 0.15,
+            ballPosition.z + directionToHole.z * 12
         );
 
-        this.camera.position.copy(this.position);
+        this.camera.position.copy(this.currentPosition);
         this.camera.up.set(0, 1, 0);
         this.camera.rotation.set(0, 0, 0);
-        this.camera.lookAt(this.lookAt);
+        this.camera.lookAt(this.currentLookAt);
 
         this.isFirstUpdate = false;
     }

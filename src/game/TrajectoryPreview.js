@@ -24,7 +24,7 @@ export class TrajectoryPreview {
     }
 
     show(physicsRef, params, holePos, getHeight, getZone) {
-        let points = this._simulate(physicsRef, params, holePos, getHeight, getZone);
+        let points = this.simulate(physicsRef, params, holePos, getHeight, getZone);
 
         this.hide();
 
@@ -39,7 +39,7 @@ export class TrajectoryPreview {
         this.scene.add(this.line);
     }
 
-    _simulate(physicsRef, params, holePos, getHeight, getZone) {
+    simulate(physicsRef, params, holePos, getHeight, getZone) {
         let simulation = new BallPhysics();
         simulation.setDimpled(params.dimpled !== false);
         simulation.setGroundCallbacks(getHeight, getZone);
@@ -77,7 +77,7 @@ export class TrajectoryPreview {
         let stepTime = 0.001;
         let sampleEveryNSteps = 16;
 
-        while (simulation.stopped == false && stepCount < maxSteps) {
+        while (simulation.stopped === false && stepCount < maxSteps) {
             simulation.update(stepTime);
             stepCount = stepCount + 1;
             sampleCount = sampleCount + 1;
@@ -88,10 +88,14 @@ export class TrajectoryPreview {
 
             let ballGroundY = getHeight(simulation.x, simulation.z);
             let surfaceY = ballGroundY + VISUAL_RADIUS;
-            let isAirborne = simulation.y > ballGroundY + simulation.R + 0.015;
+            
+            let isAirborne = false;
+            if (simulation.y > ballGroundY + simulation.R + 0.015) {
+                isAirborne = true;
+            }
 
-            let visualY;
-            if (isAirborne == true) {
+            let visualY = 0;
+            if (isAirborne === true) {
                 visualY = simulation.y + VISUAL_OFFSET;
             } else {
                 visualY = surfaceY;

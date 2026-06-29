@@ -4,12 +4,12 @@ export class WorldBounds {
         this.halfDepth = options.halfDepth;
 
         this.margin = options.margin;
-        if (this.margin === undefined) {
+        if (this.margin == null) {
             this.margin = 2;
         }
 
         this.minCameraY = options.minCameraY;
-        if (this.minCameraY === undefined) {
+        if (this.minCameraY == null) {
             this.minCameraY = 0.5;
         }
 
@@ -20,7 +20,6 @@ export class WorldBounds {
         this.getGroundHeight = fn;
     }
 
-    // بيقص الإحداثيات حتى تضل جوا حدود الملعب
     clampXZ(x, z) {
         let maxX = this.halfWidth - this.margin;
         let maxZ = this.halfDepth - this.margin;
@@ -50,7 +49,7 @@ export class WorldBounds {
         physics.z = result.z;
 
         let groundY = 0;
-        if (this.getGroundHeight) {
+        if (this.getGroundHeight != null) {
             groundY = this.getGroundHeight(result.x, result.z);
         }
 
@@ -69,7 +68,7 @@ export class WorldBounds {
         camera.position.z = result.z;
 
         let groundY = 0;
-        if (this.getGroundHeight) {
+        if (this.getGroundHeight != null) {
             groundY = this.getGroundHeight(camera.position.x, camera.position.z);
         }
 
@@ -78,5 +77,4 @@ export class WorldBounds {
             camera.position.y = minY;
         }
     }
-
 }

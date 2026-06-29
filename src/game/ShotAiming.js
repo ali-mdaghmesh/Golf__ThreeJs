@@ -1,46 +1,31 @@
 export function getHoleYawRad(ballX, ballZ, holeX, holeZ) {
     let dx = holeX - ballX;
     let dz = holeZ - ballZ;
-
-    if (dx * dx + dz * dz < 1e-8) {
-        return 0;
-    }
-
     return Math.atan2(dx, dz);
 }
 
 export function getAimYawRad(params, ballX, ballZ, holeX, holeZ) {
     let baseYaw = getHoleYawRad(ballX, ballZ, holeX, holeZ);
-
-    let aimOffsetDeg = params.aimYawDeg;
-    if (aimOffsetDeg === undefined || aimOffsetDeg === null) {
-        aimOffsetDeg = 0;
-    }
-
-    let aimOffsetRad = (aimOffsetDeg * Math.PI) / 180;
-    return baseYaw + aimOffsetRad;
+    let offset = params.aimYawDeg || 0;
+    let offsetRad = (offset * Math.PI) / 180;
+    return baseYaw + offsetRad;
 }
 
 export function computeLaunchVelocity(params, aimYawRad) {
-    let thetaRad = (params.thetaDeg * Math.PI) / 180; 
+    let theta = (params.thetaDeg * Math.PI) / 180;
     let v0 = params.v0;
+    let lateral = params.vz0 || 0;
 
-    let sinYaw = Math.sin(aimYawRad);
-    let cosYaw = Math.cos(aimYawRad);
-
-    let forwardSpeed = v0 * Math.cos(thetaRad);
-
-    let lateralSpeed = params.vz0;
-    if (lateralSpeed === undefined || lateralSpeed === null) {
-        lateralSpeed = 0;
-    }
+    let vx = Math.sin(aimYawRad) * v0 * Math.cos(theta) + Math.cos(aimYawRad) * lateral;
+    let vy = v0 * Math.sin(theta);
+    let vz = Math.cos(aimYawRad) * v0 * Math.cos(theta) - Math.sin(aimYawRad) * lateral;
 
     return {
-        vx: sinYaw * forwardSpeed + cosYaw * lateralSpeed,
-        vy: v0 * Math.sin(thetaRad),
-        vz: cosYaw * forwardSpeed - sinYaw * lateralSpeed,
+        vx: vx,
+        vy: vy,
+        vz: vz,
         omegax: params.omegaz,
         omegay: params.omegay,
-        omegaz: params.omegax,
+        omegaz: params.omegax
     };
 }

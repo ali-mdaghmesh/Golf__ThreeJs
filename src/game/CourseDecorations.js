@@ -29,7 +29,6 @@ function fitModelToGround(model, targetHeight) {
     }
     model.scale.setScalar(targetHeight / originalHeight);
 
-
     box.setFromObject(model);
     model.position.y = -box.min.y;
 
@@ -53,7 +52,8 @@ export class CourseDecorations {
         this.player = null;
         this.grassMeshes = [];
 
-        this._strokeDir = new THREE.Vector3(0, 0, 1);
+        this.strokeDir = new THREE.Vector3(0, 0, 1);
+        this.grassTemplate = null;
     }
 
     async loadAll() {
@@ -64,7 +64,6 @@ export class CourseDecorations {
         let teeX = teePosition.x;
         let teeZ = teePosition.z;
 
-        // الوتد (nail) اللي عليه الكرة بأول ضربة
         let nail = await loadGltf('./Models/nail/scene.gltf');
         fitModelToGround(nail, 0.12);
         let teeGroundY = this.course.getHeightAt(teeX, teeZ);
@@ -76,7 +75,6 @@ export class CourseDecorations {
         this.teeTopY = nailBox.max.y + nail.position.y;
         this.teeAnchor.set(teeX, this.teeTopY, teeZ);
 
-        // عصا الغولف
         let club = await loadGltf('./Models/bat/scene.gltf');
         fitModelToGround(club, 1.2);
         club.rotation.order = 'YXZ';
@@ -84,7 +82,6 @@ export class CourseDecorations {
         this.clubPivot.add(club);
         this.scene.add(this.clubPivot);
 
-        // علم وفتحة الحفرة
         let hole = await loadGltf('./Models/hole/scene.gltf');
         fitModelToGround(hole, 0.35);
         hole.position.set(holePosition.x, this.course.getHeightAt(holePosition.x, holePosition.z), holePosition.z);
@@ -100,7 +97,7 @@ export class CourseDecorations {
 
         let grassTemplate = await loadGltf('./Models/grass/scene.gltf');
         fitModelToGround(grassTemplate, 0.35);
-        this._grassTemplate = grassTemplate; 
+        this.grassTemplate = grassTemplate; 
 
         this.setGrassCount(12);
 
@@ -130,21 +127,21 @@ export class CourseDecorations {
     }
 
     positionForStroke(ballX, ballZ, aimYawRad, groundY, atTee = false) {
-        this._strokeDir.set(Math.sin(aimYawRad), 0, Math.cos(aimYawRad));
+        this.strokeDir.set(Math.sin(aimYawRad), 0, Math.cos(aimYawRad));
 
-        let sideX = this._strokeDir.z;
-        let sideZ = -this._strokeDir.x;
+        let sideX = this.strokeDir.z;
+        let sideZ = -this.strokeDir.x;
 
         this.clubPivot.position.set(ballX, groundY, ballZ);
         this.clubPivot.rotation.set(0, aimYawRad, 0);
-        this._applyClubSwing(0, 0);
+        this.applyClubSwing(0, 0);
 
         if (this.player) {
             let distanceBehindBall = 1.75;
             let lateralDistance = 0.95;
 
-            let playerX = ballX - this._strokeDir.x * distanceBehindBall + sideX * lateralDistance - 0.3;
-            let playerZ = ballZ - this._strokeDir.z * distanceBehindBall + sideZ * lateralDistance + 1.1;
+            let playerX = ballX - this.strokeDir.x * distanceBehindBall + sideX * lateralDistance - 0.3;
+            let playerZ = ballZ - this.strokeDir.z * distanceBehindBall + sideZ * lateralDistance + 1.1;
 
             this.player.position.set(playerX, groundY + 1, playerZ);
             this.player.rotation.y = aimYawRad + Math.PI * 0.12;
@@ -167,10 +164,10 @@ export class CourseDecorations {
         }
 
         let pullAmount = back * (1 - forwardAmount);
-        this._applyClubSwing(pullAmount, forwardAmount);
+        this.applyClubSwing(pullAmount, forwardAmount);
     }
 
-    _applyClubSwing(pullBack, swingForward = 0) {
+    applyClubSwing(pullBack, swingForward = 0) {
         if (!this.club) {
             return;
         }
@@ -194,12 +191,12 @@ export class CourseDecorations {
         }
         this.grassMeshes = [];
 
-        if (this._grassTemplate == null) {
+        if (this.grassTemplate == null) {
             return;
         }
 
         for (let i = 0; i < count; i++) {
-            let grassClone = this._grassTemplate.clone();
+            let grassClone = this.grassTemplate.clone();
             let x = (Math.random() - 0.5) * 70;
             let z = (Math.random() - 0.5) * 140;
             grassClone.position.set(x, this.course.getHeightAt(x, z), z);

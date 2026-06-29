@@ -5,98 +5,82 @@ export class FlyController {
         this.camera = camera;
         this.domElement = domElement;
         this.speed = speed;
-        this.enabled = false;
+        this.isEnabled = false;
 
-        this.yaw = 0;
-        this.pitch = 0;
-        this.keys = new Set();
-
-        this._onKeyDown = this._onKeyDown.bind(this);
-        this._onKeyUp = this._onKeyUp.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onClick = this._onClick.bind(this);
-        this._onLockChange = this._onLockChange.bind(this);
+        this.yawAngle = 0;
+        this.pitchAngle = 0;
+        this.pressedKeys = {};
+        this.isLocked = false;
     }
 
     attach() {
-        window.addEventListener('keydown', this._onKeyDown);
-        window.addEventListener('keyup', this._onKeyUp);
-        document.addEventListener('mousemove', this._onMouseMove);
-        document.addEventListener('pointerlockchange', this._onLockChange);
-        this.domElement.addEventListener('click', this._onClick);
+        window.addEventListener('keydown', (event) => {
+            if (!this.isEnabled) return;
+            this.pressedKeys[event.code] = true;
+        });
+        window.addEventListener('keyup', (event) => {
+            this.pressedKeys[event.code] = false;
+        });
+        document.addEventListener('mousemove', (event) => {
+            if (!this.isEnabled || !this.isLocked) return;
+            this.yawAngle -= event.movementX * 0.0022;
+            this.pitchAngle -= event.movementY * 0.0022;
+            let limit = 1.5;
+            if (this.pitchAngle > limit) this.pitchAngle = limit;
+            if (this.pitchAngle < -limit) this.pitchAngle = -limit;
+        });
+        document.addEventListener('pointerlockchange', () => {
+            this.isLocked = document.pointerLockElement === this.domElement;
+        });
+        this.domElement.addEventListener('click', () => {
+            if (!this.isEnabled) return;
+            this.domElement.requestPointerLock();
+        });
     }
 
-    _onKeyDown(e) {
-        if (!this.enabled) return;
-        if (e.target.matches('input, select, textarea, button')) return;
-        this.keys.add(e.code);
-    }
-
-    _onKeyUp(e) {
-        this.keys.delete(e.code);
-    }
-
-    _onClick() {
-        if (!this.enabled) return;
-        this.domElement.requestPointerLock?.();
-    }
-
-    _onLockChange() {
-        this._locked = document.pointerLockElement === this.domElement;
-    }
-
-    _onMouseMove(e) {
-        if (!this.enabled || !this._locked) return;
-        this.yaw -= e.movementX * 0.0022;
-        this.pitch -= e.movementY * 0.0022;
-        const limit = Math.PI / 2 - 0.05;
-        this.pitch = THREE.MathUtils.clamp(this.pitch, -limit, limit);
-    }
-
-    /** مزامنة الزوايا من اتجاه الكاميرا الحالي (بعد lookAt) */
     activate() {
-        const dir = new THREE.Vector3();
-        this.camera.getWorldDirection(dir);
-        this.yaw = Math.atan2(-dir.x, -dir.z);
-        this.pitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
-        this.enabled = true;
+        let direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        this.yawAngle = Math.atan2(-direction.x, -direction.z);
+        this.pitchAngle = Math.asin(direction.y);
+        this.isEnabled = true;
         this.camera.rotation.order = 'YXZ';
-        this._applyRotation();
+        this.applyRotation();
     }
 
     deactivate() {
-        this.enabled = false;
-        this.keys.clear();
+        this.isEnabled = false;
+        this.pressedKeys = {};
         if (document.pointerLockElement === this.domElement) {
-            document.exitPointerLock?.();
+            document.exitPointerLock();
         }
     }
 
-    _applyRotation() {
-        this.camera.rotation.x = this.pitch;
-        this.camera.rotation.y = this.yaw;
+    applyRotation() {
+        this.camera.rotation.x = this.pitchAngle;
+        this.camera.rotation.y = this.yawAngle;
         this.camera.rotation.z = 0;
     }
 
-    update(dt) {
-        if (!this.enabled) return;
+    update(deltaTime) {
+        if (!this.isEnabled) return;
 
-        this._applyRotation();
+        this.applyRotation();
 
-        const forward = new THREE.Vector3(0, 0, -1).applyEuler(this.camera.rotation);
-        const right = new THREE.Vector3(1, 0, 0).applyEuler(this.camera.rotation);
+        let forwardVector = new THREE.Vector3(0, 0, -1).applyEuler(this.camera.rotation);
+        let rightVector = new THREE.Vector3(1, 0, 0).applyEuler(this.camera.rotation);
 
-        let move = new THREE.Vector3();
-        if (this.keys.has('KeyW')) move.add(forward);
-        if (this.keys.has('KeyS')) move.sub(forward);
-        if (this.keys.has('KeyD')) move.add(right);
-        if (this.keys.has('KeyA')) move.sub(right);
-        if (this.keys.has('KeyE') || this.keys.has('Space')) move.y += 1;
-        if (this.keys.has('KeyQ')) move.y -= 1;
+        let moveDirection = new THREE.Vector3(0, 0, 0);
+        if (this.pressedKeys['KeyW']) moveDirection.add(forwardVector);
+        if (this.pressedKeys['KeyS']) moveDirection.sub(forwardVector);
+        if (this.pressedKeys['KeyD']) moveDirection.add(rightVector);
+        if (this.pressedKeys['KeyA']) moveDirection.sub(rightVector);
+        if (this.pressedKeys['KeyE'] || this.pressedKeys['Space']) moveDirection.y += 1;
+        if (this.pressedKeys['KeyQ']) moveDirection.y -= 1;
 
-        if (move.lengthSq() > 0) {
-            move.normalize().multiplyScalar(this.speed * dt);
-            this.camera.position.add(move);
+        if (moveDirection.lengthSq() > 0) {
+            moveDirection.normalize();
+            this.camera.position.addScaledVector(moveDirection, this.speed * deltaTime);
         }
     }
 }

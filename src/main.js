@@ -52,7 +52,7 @@ async function init() {
     showBunkers: true,
     showWater: false,
     grassTexturePath: '/Textures/grass3.avif',
-    sandTexturePath: '../Textures/sand.jpg',
+    sandTexturePath: '/Textures/sand.jpg',
 });
 
     await course.init();

@@ -10,8 +10,8 @@ export function setupScene(scene, renderer) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    let hemisphereLight = new THREE.HemisphereLight(0xb8e0ff, 0x3d6b2f, 0.55);
-    scene.add(hemisphereLight);
+    let hemiLight = new THREE.HemisphereLight(0xb8e0ff, 0x3d6b2f, 0.55);
+    scene.add(hemiLight);
 
     let ambientLight = new THREE.AmbientLight(0xffffff, 0.28);
     scene.add(ambientLight);
@@ -22,14 +22,12 @@ export function setupScene(scene, renderer) {
     sunLight.shadow.bias = -0.0002;
     sunLight.shadow.normalBias = 0.02;
     sunLight.shadow.mapSize.set(2048, 2048);
-
-    let shadowCamera = sunLight.shadow.camera;
-    shadowCamera.near = 2;
-    shadowCamera.far = 280;
-    shadowCamera.left = -110;
-    shadowCamera.right = 110;
-    shadowCamera.top = 110;
-    shadowCamera.bottom = -110;
+    sunLight.shadow.camera.near = 2;
+    sunLight.shadow.camera.far = 280;
+    sunLight.shadow.camera.left = -110;
+    sunLight.shadow.camera.right = 110;
+    sunLight.shadow.camera.top = 110;
+    sunLight.shadow.camera.bottom = -110;
     scene.add(sunLight);
 
     let fillLight = new THREE.DirectionalLight(0x88b4ff, 0.25);
@@ -67,5 +65,5 @@ export function setupScene(scene, renderer) {
     skyDome.name = 'SkyDome';
     scene.add(skyDome);
 
-    return { sun: sunLight, hemi: hemisphereLight };
+    return { sun: sunLight, hemi: hemiLight };
 }

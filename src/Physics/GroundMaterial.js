@@ -26,15 +26,4 @@ export class GroundMaterial {
         this.mu_impact = 0.5;
         this.e = 0.6;
     }
-
-    change(type) {
-        if (type === 'smooth') {
-            this.mu_rolling = 0.01;
-            this.e = 0.85;
-        } else if (type === 'rough') {
-            this.setRough();
-        } else {
-            this.setGrass();
-        }
-    }
 }

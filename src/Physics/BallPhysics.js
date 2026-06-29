@@ -13,7 +13,7 @@ export class BallPhysics {
         this.R = 0.02135;
         this.g = 9.81;
         this.rho = 1.225;
-        this.I = (2 / 5) * this.m * this.R * this.R;
+        this.I = (2/5) * this.m * this.R * this.R;
         this.area = Math.PI * this.R * this.R;
 
         this.setDimpled(true);
@@ -125,33 +125,32 @@ export class BallPhysics {
     }
 
     _step(dt) {
+        let forces = this._calculateForces();
+
+        this._updateMotion(forces, dt);
+
+        this._handleGroundCollision(dt);
+
+        this._checkIfStopped();
+    }
+
+    _calculateForces() {
         const { m, R, g, rho, Cd, Cl0, Cl_max, I, area } = this;
-        const ground = this.ground;
-
-        let { x, y, z, vx, vy, vz, omegax, omegay, omegaz } = this;
-
-        const gy = this._groundY(x, z);
-        const contactY = gy + R;
-
-        if (y <= contactY + 0.0001) {
-            this._applyZoneFriction();
-        }
-
-        let vTotal = Math.hypot(vx, vy, vz);
+        let vTotal = Math.hypot(this.vx, this.vy, this.vz);
         if (vTotal < 1e-6) vTotal = 1e-6;
 
         const F_drag_mag = 0.5 * rho * Cd * area * vTotal * vTotal;
-        const F_drag_x = -F_drag_mag * (vx / vTotal);
-        const F_drag_y = -F_drag_mag * (vy / vTotal);
-        const F_drag_z = -F_drag_mag * (vz / vTotal);
+        const F_drag_x = -F_drag_mag * (this.vx / vTotal);
+        const F_drag_y = -F_drag_mag * (this.vy / vTotal);
+        const F_drag_z = -F_drag_mag * (this.vz / vTotal);
 
-        const cross_x = omegay * vz - omegaz * vy;
-        const cross_y = omegaz * vx - omegax * vz;
-        const cross_z = omegax * vy - omegay * vx;
+        const cross_x = this.omegay * this.vz - this.omegaz * this.vy;
+        const cross_y = this.omegaz * this.vx - this.omegax * this.vz;
+        const cross_z = this.omegax * this.vy - this.omegay * this.vx;
         let crossMag = Math.hypot(cross_x, cross_y, cross_z);
         if (crossMag < 1e-8) crossMag = 1e-8;
 
-        const spinTotal = Math.hypot(omegax, omegay, omegaz);
+        const spinTotal = Math.hypot(this.omegax, this.omegay, this.omegaz);
         const spinRatio = (spinTotal * R) / vTotal;
         const Cl = Math.min(Cl0 * spinRatio, Cl_max);
         const F_magnus_mag = 0.5 * rho * Cl * area * vTotal * vTotal;
@@ -160,114 +159,93 @@ export class BallPhysics {
         const F_magnus_y = F_magnus_mag * (cross_y / crossMag);
         const F_magnus_z = F_magnus_mag * (cross_z / crossMag);
 
-        const penetrating = y < contactY - 0.0001;
-        const onGround = penetrating || (y <= contactY + 0.002 && vy <= 0.08);
-
-        let N = 0;
         let F_fric_x = 0;
         let F_fric_z = 0;
         let torque_x = 0;
         let torque_y = 0;
         let torque_z = 0;
+        
+        const gy = this._groundY(this.x, this.z);
+        const contactY = gy + R;
+        const penetrating = this.y < contactY - 0.0001;
+        const onGround = penetrating || (this.y <= contactY + 0.002 && this.vy <= 0.08);
 
         if (onGround || penetrating) {
-            N = m * g;
-
-            const vHoriz = Math.hypot(vx, vz);
-            const vSlip = Math.hypot(
-                vx + omegaz * R,
-                vz - omegax * R
-            );
-
+            this._applyZoneFriction();
+            let N = m * g;
+            const vHoriz = Math.hypot(this.vx, this.vz);
             if (vHoriz > 0.01) {
-                if (vSlip > 0.5) {
-                    const F_slide = ground.mu_sliding * N;
-                    F_fric_x = -F_slide * (vx / vHoriz);
-                    F_fric_z = -F_slide * (vz / vHoriz);
-                } else {
-                    const F_roll = ground.mu_rolling * N;
-                    F_fric_x = -F_roll * (vx / vHoriz);
-                    F_fric_z = -F_roll * (vz / vHoriz);
-                }
+                const F_fric_mag = (Math.hypot(this.vx + this.omegaz * R, this.vz - this.omegax * R) > 0.5) 
+                    ? this.ground.mu_sliding * N 
+                    : this.ground.mu_rolling * N;
+                F_fric_x = -F_fric_mag * (this.vx / vHoriz);
+                F_fric_z = -F_fric_mag * (this.vz / vHoriz);
             }
-
-            const targetOmegax = vz / R;
-            const targetOmegaz = -vx / R;
-            torque_x = (targetOmegax - omegax) * GROUND_TORQUE_GAIN * I;
-            torque_y = (0 - omegay) * GROUND_TORQUE_GAIN * I;
-            torque_z = (targetOmegaz - omegaz) * GROUND_TORQUE_GAIN * I;
+            torque_x = ((this.vz / R) - this.omegax) * GROUND_TORQUE_GAIN * I;
+            torque_y = (0 - this.omegay) * GROUND_TORQUE_GAIN * I;
+            torque_z = ((-this.vx / R) - this.omegaz) * GROUND_TORQUE_GAIN * I;
         }
 
-        const F_net_x = F_drag_x + F_magnus_x + F_fric_x;
-        const F_net_y = F_drag_y + F_magnus_y - m * g + (onGround || penetrating ? N : 0);
-        const F_net_z = F_drag_z + F_magnus_z + F_fric_z;
+        return {
+            x: F_drag_x + F_magnus_x + F_fric_x,
+            y: F_drag_y + F_magnus_y - m * g + (onGround || penetrating ? m * g : 0),
+            z: F_drag_z + F_magnus_z + F_fric_z,
+            tx: torque_x,
+            ty: torque_y,
+            tz: torque_z
+        };
+    }
 
-        const ax = F_net_x / m;
-        const ay = F_net_y / m;
-        const az = F_net_z / m;
+    _updateMotion(forces, dt) {
+        this.vx += (forces.x / this.m) * dt;
+        this.vy += (forces.y / this.m) * dt;
+        this.vz += (forces.z / this.m) * dt;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.z += this.vz * dt;
 
-        const alphax = torque_x / I;
-        const alphay = torque_y / I;
-        const alphaz = torque_z / I;
-
-        vx += ax * dt;
-        vy += ay * dt;
-        vz += az * dt;
-        x += vx * dt;
-        y += vy * dt;
-        z += vz * dt;
-
-        omegax += alphax * dt;
-        omegay += alphay * dt;
-        omegaz += alphaz * dt;
+        this.omegax += (forces.tx / this.I) * dt;
+        this.omegay += (forces.ty / this.I) * dt;
+        this.omegaz += (forces.tz / this.I) * dt;
         this.t += dt;
+    }
 
-        const gy2 = this._groundY(x, z);
-        const floor = gy2 + R;
+    _handleGroundCollision(dt) {
+        const gy2 = this._groundY(this.x, this.z);
+        const floor = gy2 + this.R;
 
-        if (y < floor && vy < 0) {
-            y = floor;
-            const vyBefore = vy;
-            vy = -ground.e * vyBefore;
+        if (this.y < floor && this.vy < 0) {
+            this.y = floor;
+            this.vy = -this.ground.e * this.vy;
 
-            const deltaVy = vy - vyBefore;
-            const muImpact = ground.mu_impact;
+            const muImpact = this.ground.mu_impact;
+            const sgnVx = Math.sign(this.vx);
+            const sgnVz = Math.sign(this.vz);
 
-            const sgnVx = Math.abs(vx) > 1e-6 ? Math.sign(vx) : 0;
-            const sgnVz = Math.abs(vz) > 1e-6 ? Math.sign(vz) : 0;
+            this.vx += sgnVx !== 0 ? -muImpact * this.vy * sgnVx : 0;
+            this.vz += sgnVz !== 0 ? -muImpact * this.vy * sgnVz : 0;
 
-            const deltaVx = sgnVx !== 0 ? -muImpact * deltaVy * sgnVx : 0;
-            const deltaVz = sgnVz !== 0 ? -muImpact * deltaVy * sgnVz : 0;
-
-            vx += deltaVx;
-            vz += deltaVz;
-
-            omegaz += (-deltaVx * R) / I;
-            omegax += (deltaVz * R) / I;
+            this.omegaz += (-this.vx * this.R) / this.I;
+            this.omegax += (this.vz * this.R) / this.I;
 
             this.bounceCount++;
-        } else if (y < floor) {
-            y = floor;
+        } else if (this.y < floor) {
+            this.y = floor;
         }
+    }
 
-        const speed = Math.hypot(vx, vy, vz);
-        const spin = Math.hypot(omegax, omegay, omegaz);
-        if (y <= floor + 0.001 && speed < STOP_SPEED && spin < STOP_SPIN) {
-            vx = vy = vz = 0;
-            omegax = omegay = omegaz = 0;
-            y = floor;
+    _checkIfStopped() {
+        const gy = this._groundY(this.x, this.z);
+        const floor = gy + this.R;
+        const speed = Math.hypot(this.vx, this.vy, this.vz);
+        const spin = Math.hypot(this.omegax, this.omegay, this.omegaz);
+        
+        if (this.y <= floor + 0.001 && speed < STOP_SPEED && spin < STOP_SPIN) {
+            this.vx = this.vy = this.vz = 0;
+            this.omegax = this.omegay = this.omegaz = 0;
+            this.y = floor;
             this.stopped = true;
         }
-
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.vx = vx;
-        this.vy = vy;
-        this.vz = vz;
-        this.omegax = omegax;
-        this.omegay = omegay;
-        this.omegaz = omegaz;
     }
 
     get position() {

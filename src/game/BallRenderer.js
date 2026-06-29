@@ -1,65 +1,64 @@
 import * as THREE from 'three';
 
 export const BALL_VISUAL_SCALE = 2.4;
-
-const R = 0.02135;
+const PHYSICS_RADIUS = 0.02135;
 
 export class BallRenderer {
-    constructor(scene, physicsRadius = R) {
-        this.physicsRadius = physicsRadius;
-        this.renderRadius = physicsRadius * BALL_VISUAL_SCALE;
+    constructor(scene, radius = PHYSICS_RADIUS) {
+        this.physicsRadius = radius;
+        this.renderRadius = radius * BALL_VISUAL_SCALE;
         this.visualOffset = this.renderRadius - this.physicsRadius;
         this.teeVisualExtra = 0.1;
 
         this.group = new THREE.Group();
         this.group.name = 'GolfBall';
 
-        let ballGeo = new THREE.SphereGeometry(this.renderRadius, 48, 48);
-        let ballMat = new THREE.MeshPhysicalMaterial();
+        let ballGeometry = new THREE.SphereGeometry(this.renderRadius, 48, 48);
+        let ballMaterial = new THREE.MeshPhysicalMaterial();
         
-        this.mesh = new THREE.Mesh(ballGeo, ballMat);
+        this.mesh = new THREE.Mesh(ballGeometry, ballMaterial);
         this.group.add(this.mesh);
 
-        this.trailMax = 120;
+        this.trailMaxPoints = 120;
         this.trailPoints = [];
         this.trailLine = null;
-        
-        this.trailMat = new THREE.LineBasicMaterial();
+        this.trailMaterial = new THREE.LineBasicMaterial();
 
-        this.mySpinAngle = new THREE.Euler(0, 0, 0);
+        this.spinRotation = new THREE.Euler(0, 0, 0);
         this.lastTrailTime = 0;
         this.myScene = scene;
 
         scene.add(this.group);
     }
 
-    computeVisualY(physicsY, groundY, onTee, teeTopY, stopped = false) {
-        if (onTee == true && teeTopY != null) {
-            return teeTopY + this.renderRadius + this.teeVisualExtra;
+    computeVisualY(physicsY, groundY, onTee, teeTopY, stopped) {
+        if (onTee == true) {
+            if (teeTopY != null) {
+                return teeTopY + this.renderRadius + this.teeVisualExtra;
+            }
         }
 
         let surfaceY = groundY + this.renderRadius;
-        let contact = groundY + this.physicsRadius;
+        let contactY = groundY + this.physicsRadius;
 
         let onGround = false;
-        
         if (stopped == true) {
             onGround = true;
-        } else if (physicsY <= contact) {
+        } else if (physicsY <= contactY) {
             onGround = true;
         }
 
         if (onGround == true) {
             return surfaceY;
+        } else {
+            return physicsY + this.visualOffset;
         }
-
-        return physicsY + this.visualOffset;
     }
 
-    _rebuildTrailGeometry() {
-        let numberOfPoints = this.trailPoints.length;
+    rebuildTrail() {
+        let count = this.trailPoints.length;
         
-        if (numberOfPoints < 2) {
+        if (count < 2) {
             if (this.trailLine != null) {
                 this.trailLine.visible = false;
             }
@@ -71,8 +70,8 @@ export class BallRenderer {
             this.myScene.remove(this.trailLine);
         }
 
-        let newGeo = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
-        this.trailLine = new THREE.Line(newGeo, this.trailMat);
+        let geometry = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
+        this.trailLine = new THREE.Line(geometry, this.trailMaterial);
         this.trailLine.frustumCulled = false;
         this.myScene.add(this.trailLine);
         this.trailLine.visible = true;
@@ -98,31 +97,31 @@ export class BallRenderer {
             isStopped = true;
         }
 
-        let vY = this.computeVisualY(posY, groundY, isOnTee, topOfTee, isStopped);
-        this.group.position.set(posX, vY, posZ);
+        let visualY = this.computeVisualY(posY, groundY, isOnTee, topOfTee, isStopped);
+        this.group.position.set(posX, visualY, posZ);
 
         let timeStep = 0.016; 
         
-        this.mySpinAngle.x = this.mySpinAngle.x + (physics.omegax * timeStep);
-        this.mySpinAngle.y = this.mySpinAngle.y + (physics.omegay * timeStep);
-        this.mySpinAngle.z = this.mySpinAngle.z + (physics.omegaz * timeStep);
+        this.spinRotation.x = this.spinRotation.x + (physics.omegax * timeStep);
+        this.spinRotation.y = this.spinRotation.y + (physics.omegay * timeStep);
+        this.spinRotation.z = this.spinRotation.z + (physics.omegaz * timeStep);
         
-        this.mesh.rotation.copy(this.mySpinAngle);
+        this.mesh.rotation.copy(this.spinRotation);
 
         if (showTrail == true && physics.stopped == false) {
-            let currentTime = performance.now();
+            let now = performance.now();
             
-            if (currentTime - this.lastTrailTime > 50) {
-                this.lastTrailTime = currentTime;
+            if (now - this.lastTrailTime > 50) {
+                this.lastTrailTime = now;
                 
-                let newPoint = new THREE.Vector3(posX, vY, posZ);
-                this.trailPoints.push(newPoint);
+                let point = new THREE.Vector3(posX, visualY, posZ);
+                this.trailPoints.push(point);
                 
-                if (this.trailPoints.length > this.trailMax) {
+                if (this.trailPoints.length > this.trailMaxPoints) {
                     this.trailPoints.shift(); 
                 }
                 
-                this._rebuildTrailGeometry();
+                this.rebuildTrail();
             }
         } else if (physics.stopped == true && this.trailLine != null) {
             this.trailLine.visible = false;
@@ -131,13 +130,10 @@ export class BallRenderer {
 
     clearTrail() {
         this.trailPoints = [];
-        
         if (this.trailLine != null) {
             this.trailLine.geometry.dispose();
             this.myScene.remove(this.trailLine);
             this.trailLine = null;
         }
     }
-
-    
 }

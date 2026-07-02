@@ -40,7 +40,6 @@ export function buildDefaultShot(teePosition) {
         viewYawDeg: 0,
         dimpled: true,
         cameraMode: 'follow',
-        showTrail: true,
         startX: teePosition.x,
         startZ: teePosition.z,
     };

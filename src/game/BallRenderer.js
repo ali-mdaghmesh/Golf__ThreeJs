@@ -8,7 +8,7 @@ export class BallRenderer {
         this.physicsRadius = radius;
         this.renderRadius = radius * BALL_VISUAL_SCALE;
         this.visualOffset = this.renderRadius - this.physicsRadius;
-        this.teeVisualExtra = 0.1;
+        this.teeVisualExtra = 0.19;
 
         this.group = new THREE.Group();
         this.group.name = 'GolfBall';
@@ -24,7 +24,6 @@ export class BallRenderer {
         this.trailLine = null;
         this.trailMaterial = new THREE.LineBasicMaterial();
 
-        this.spinRotation = new THREE.Euler(0, 0, 0);
         this.lastTrailTime = 0;
         this.myScene = scene;
 
@@ -56,15 +55,6 @@ export class BallRenderer {
     }
 
     rebuildTrail() {
-        let count = this.trailPoints.length;
-        
-        if (count < 2) {
-            if (this.trailLine != null) {
-                this.trailLine.visible = false;
-            }
-            return;
-        }
-
         if (this.trailLine != null) {
             this.trailLine.geometry.dispose();
             this.myScene.remove(this.trailLine);
@@ -77,7 +67,7 @@ export class BallRenderer {
         this.trailLine.visible = true;
     }
 
-    sync(physics, showTrail, groundY = 0, options = {}) {
+    sync(physics, showTrail = true, groundY = 0, options = {}) {
         let posX = physics.position.x;
         let posY = physics.position.y;
         let posZ = physics.position.z;
@@ -100,13 +90,6 @@ export class BallRenderer {
         let visualY = this.computeVisualY(posY, groundY, isOnTee, topOfTee, isStopped);
         this.group.position.set(posX, visualY, posZ);
 
-        let timeStep = 0.016; 
-        
-        this.spinRotation.x = this.spinRotation.x + (physics.omegax * timeStep);
-        this.spinRotation.y = this.spinRotation.y + (physics.omegay * timeStep);
-        this.spinRotation.z = this.spinRotation.z + (physics.omegaz * timeStep);
-        
-        this.mesh.rotation.copy(this.spinRotation);
 
         if (showTrail == true && physics.stopped == false) {
             let now = performance.now();
@@ -124,7 +107,7 @@ export class BallRenderer {
                 this.rebuildTrail();
             }
         } else if (physics.stopped == true && this.trailLine != null) {
-            this.trailLine.visible = false;
+            this.clearTrail();
         }
     }
 

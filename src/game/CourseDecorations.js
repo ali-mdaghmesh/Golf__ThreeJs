@@ -9,10 +9,6 @@ function loadGltf(path) {
             path,
             function (gltf) {
                 resolve(gltf.scene);
-            },
-            undefined,
-            function (error) {
-                reject(error);
             }
         );
     });

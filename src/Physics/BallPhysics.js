@@ -20,7 +20,6 @@ export class BallPhysics {
 
         this.ground = new GroundMaterial(); 
         this.getGroundHeight = null;
-        this.getZoneAt = null;
         this.groundType = 'shortGrass';
 
         this.resetState();
@@ -67,9 +66,9 @@ export class BallPhysics {
         vz: vzOverride,
     } = {}) {
         const theta = (thetaDeg * Math.PI) / 180;
-        const vx = vxOverride ?? v0 * Math.cos(theta);
-        const vy = vyOverride ?? v0 * Math.sin(theta);
-        const vz = vzOverride ?? vz0;
+        const vx = vxOverride;
+        const vy = vyOverride;
+        const vz = vzOverride;
 
         this.x = startX;
         this.z = startZ;
@@ -90,7 +89,6 @@ export class BallPhysics {
 
     setGroundCallbacks(getHeight, getZone) {
         this.getGroundHeight = getHeight;
-        this.getZoneAt = getZone;
     }
 
     _groundY(x, z) {
@@ -112,7 +110,8 @@ export class BallPhysics {
 }
 
     update(frameDt) {
-        if (this.stopped) return;
+        if (this.stopped) 
+            return;
 
         this._accumulator += Math.min(frameDt, 0.05);
         let steps = 0;

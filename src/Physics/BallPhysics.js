@@ -25,7 +25,6 @@ export class BallPhysics {
         this.resetState();
         this._accumulator = 0;
         this.stopped = true;
-        this.bounceCount = 0;
     }
 
     setDimpled(dimpled) {
@@ -46,7 +45,6 @@ export class BallPhysics {
         this.omegay = 0;
         this.omegaz = 0;
         this.t = 0;
-        this.bounceCount = 0;
         this.stopped = true;
         this._accumulator = 0;
     }
@@ -82,12 +80,11 @@ export class BallPhysics {
         this.omegay = omegay;
         this.omegaz = omegaz;
         this.t = 0;
-        this.bounceCount = 0;
         this.stopped = false;
         this._accumulator = 0;
     }
 
-    setGroundCallbacks(getHeight, getZone) {
+    setGroundCallbacks(getHeight) {
         this.getGroundHeight = getHeight;
     }
 
@@ -227,7 +224,6 @@ export class BallPhysics {
             this.omegaz += (-this.vx * this.R) / this.I;
             this.omegax += (this.vz * this.R) / this.I;
 
-            this.bounceCount++;
         } else if (this.y < floor) {
             this.y = floor;
         }

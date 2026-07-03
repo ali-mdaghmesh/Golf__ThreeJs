@@ -21,9 +21,9 @@ export class GroundMaterial {
     }
 
     setBunker() {
-        this.mu_rolling = 0.25;
-        this.mu_sliding = 0.5;
-        this.mu_impact = 0.5;
-        this.e = 0.6;
-    }
+    this.mu_rolling = 0.45; 
+    this.mu_sliding = 2.6;   
+    this.mu_impact = 2.75;   
+    this.e = 0.15;         
+}
 }

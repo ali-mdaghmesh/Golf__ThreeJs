@@ -4,13 +4,11 @@ export class Dashboard {
     constructor(callbacks) {
         this.callbacks = callbacks;
         
-        // جلب العناصر بالطريقة العادية
         this.rootPanel = document.getElementById('dashboard');
         this.toggleButton = document.getElementById('btn-dashboard');
         this.closeButton = document.getElementById('dashboard-close');
         this.backdrop = document.getElementById('dashboard-backdrop');
 
-        // نسخ القيم 
         this.defaultSettings = Object.assign({}, DEFAULT_SHOT_TEMPLATE);
         this.currentSettings = Object.assign({}, this.defaultSettings);
         
@@ -20,7 +18,6 @@ export class Dashboard {
     }
 
     setDefaults(newDefaults) {
-        // تحديث القيم الافتراضية
         this.defaultSettings = Object.assign(this.defaultSettings, newDefaults);
         
         if (this.userChangedSomething == false) {
@@ -33,11 +30,9 @@ export class Dashboard {
         return Object.assign({}, this.defaultSettings);
     }
 
-    // دالة لربط كل الأزرار
     setupButtonsAndSliders() {
         let self = this; 
 
-        // زر فتح القائمة
         if (this.toggleButton != null) {
             this.toggleButton.addEventListener('click', function(event) {
                 event.stopPropagation();
@@ -51,7 +46,6 @@ export class Dashboard {
             });
         }
 
-        // زر إغلاق القائمة
         if (this.closeButton != null) {
             this.closeButton.addEventListener('click', function(event) {
                 event.stopPropagation();
@@ -73,7 +67,6 @@ export class Dashboard {
             });
         }
 
-        // --- ربط أشرطة التمرير (Sliders) يدوياً ---
         function bindMySlider(id, key) {
             let el = document.getElementById(id);
             if (el != null) {
@@ -102,7 +95,6 @@ export class Dashboard {
         bindMySlider('param-aim-yaw', 'aimYawDeg');
         bindMySlider('param-view-yaw', 'viewYawDeg');
 
-        // --- زر إطلاق الكرة ---
         let shootBtn = document.getElementById('btn-shoot');
         if (shootBtn != null) {
             shootBtn.addEventListener('pointerdown', function(event) {
@@ -120,7 +112,6 @@ export class Dashboard {
             });
         }
 
-        // --- زر إعادة الضبط ---
         let resetBtn = document.getElementById('btn-reset');
         if (resetBtn != null) {
             resetBtn.addEventListener('click', function() {
@@ -133,11 +124,9 @@ export class Dashboard {
             });
         }
 
-        // --- خيارات الكرة ---
         let dimpledBox = document.getElementById('ball-dimpled');
         let smoothBox = document.getElementById('ball-smooth');
 
-        //
 
         let groundSelect = document.getElementById('ground-type');
         if (groundSelect != null) {
@@ -148,7 +137,6 @@ export class Dashboard {
             });
         }
 
-        // --- وضع الكاميرا ---
 let cameraModeSelect = document.getElementById('camera-mode');
 if (cameraModeSelect != null) {
     cameraModeSelect.addEventListener('change', function() {
@@ -158,7 +146,6 @@ if (cameraModeSelect != null) {
     });
 }
 
-// --- مسار الكرة ---
 let trailBox = document.getElementById('opt-trail');
 if (trailBox != null) {
     trailBox.addEventListener('change', function() {
@@ -168,7 +155,6 @@ if (trailBox != null) {
     });
 }
 
-// --- متابعة الكرة ---
 let followBox = document.getElementById('opt-follow');
 if (followBox != null) {
     followBox.addEventListener('change', function() {
@@ -211,7 +197,6 @@ if (followBox != null) {
         }
     }
 
-    // طريقة يدوية لتحديث كل عناصر الشاشة (تشمل زوايا الدوران)
     updateAllInputsOnScreen() {
         let self = this;
 

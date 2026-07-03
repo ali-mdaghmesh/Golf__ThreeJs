@@ -87,7 +87,8 @@ export class GolfGame {
 
     getParams() {
             let params = this.dashboard.getShootParams();
-            if (params) return params;
+            if (params) 
+                return params;
         return this.defaultShot;
     }
 
@@ -254,7 +255,8 @@ export class GolfGame {
     }
 
     beginCharge() {
-        if (this.inCup || !this.physics.stopped || this.phase == PHASE.SWINGING) return;
+        if (this.inCup || !this.physics.stopped || this.phase == PHASE.SWINGING) 
+            return;
         this.phase = PHASE.CHARGING;
         this.swingPull = 0;
         this.updateAimPreview();
@@ -268,7 +270,8 @@ export class GolfGame {
     }
 
     cancelCharge() {
-        if (this.phase != PHASE.CHARGING) return;
+        if (this.phase != PHASE.CHARGING) 
+            return;
         this.phase = PHASE.IDLE;
         this.swingPull = 0;
         this.decorations.setSwingPose(0, 0);

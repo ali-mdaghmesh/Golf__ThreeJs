@@ -32,9 +32,7 @@ export class BallRenderer {
 
     computeVisualY(physicsY, groundY, onTee, teeTopY, stopped) {
         if (onTee == true) {
-            if (teeTopY != null) {
                 return teeTopY + this.renderRadius + this.teeVisualExtra;
-            }
         }
 
         let surfaceY = groundY + this.renderRadius;

@@ -124,8 +124,6 @@ function bindKeyboard() {
 
         if (event.key === 'r' || event.key === 'R') {
             game.resetBall();
-            let winEl = document.getElementById('hud-win');
-if (winEl) { winEl.classList.remove('show'); }
         }
     });
 

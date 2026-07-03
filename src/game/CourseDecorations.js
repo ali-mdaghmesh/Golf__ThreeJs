@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const gltfLoader = new GLTFLoader();
 
 function loadGltf(path) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
         gltfLoader.load(
             path,
             function (gltf) {
@@ -20,9 +20,6 @@ function fitModelToGround(model, targetHeight) {
     box.getSize(size);
 
     let originalHeight = size.y;
-    if (!originalHeight) {
-        originalHeight = 1;
-    }
     model.scale.setScalar(targetHeight / originalHeight);
 
     box.setFromObject(model);
@@ -194,9 +191,8 @@ export class CourseDecorations {
         for (let i = 0; i < count; i++) {
             let grassClone = this.grassTemplate.clone();
             let x = (Math.random() - 0.5) * 70;
-            let z = (Math.random() - 0.5) * 140;
+            let z = (Math.random() - 0.5) * 280;
             grassClone.position.set(x, this.course.getHeightAt(x, z), z);
-            grassClone.rotation.y = Math.random() * Math.PI * 2;
             grassClone.scale.multiplyScalar(0.7 + Math.random() * 0.5);
             this.scene.add(grassClone);
             this.grassMeshes.push(grassClone);

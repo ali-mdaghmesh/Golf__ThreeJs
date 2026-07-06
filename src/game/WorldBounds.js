@@ -47,19 +47,6 @@ export class WorldBounds {
         let result = this.clampXZ(physics.x, physics.z);
         physics.x = result.x;
         physics.z = result.z;
-
-        let groundY = 0;
-        if (this.getGroundHeight != null) {
-            groundY = this.getGroundHeight(result.x, result.z);
-        }
-
-        let floorY = groundY + physics.R;
-        if (physics.y < floorY) {
-            physics.y = floorY;
-            if (physics.vy < 0) {
-                physics.vy = 0;
-            }
-        }
     }
 
     clampCamera(camera) {

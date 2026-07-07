@@ -60,7 +60,6 @@ export class BallRenderer {
 
         let geometry = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
         this.trailLine = new THREE.Line(geometry, this.trailMaterial);
-        this.trailLine.frustumCulled = false;
         this.myScene.add(this.trailLine);
         this.trailLine.visible = true;
     }

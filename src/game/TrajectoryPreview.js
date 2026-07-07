@@ -28,14 +28,9 @@ export class TrajectoryPreview {
 
         this.hide();
 
-        if (points.length < 2) {
-            return;
-        }
-
         let geometry = new THREE.BufferGeometry().setFromPoints(points);
         this.line = new THREE.Line(geometry, this.lineMaterial);
         this.line.computeLineDistances();
-        this.line.frustumCulled = false;
         this.scene.add(this.line);
     }
 
@@ -45,15 +40,7 @@ export class TrajectoryPreview {
         simulation.setGroundCallbacks(getHeight, getZone);
 
         let startX = params.startX;
-        if (startX === undefined || startX === null) {
-            startX = physicsRef.x;
-        }
-
         let startZ = params.startZ;
-        if (startZ === undefined || startZ === null) {
-            startZ = physicsRef.z;
-        }
-
         let groundY = getHeight(startX, startZ);
         let aimYaw = getAimYawRad(params, startX, startZ, holePos.x, holePos.z);
         let launch = computeLaunchVelocity(params, aimYaw);
@@ -68,39 +55,20 @@ export class TrajectoryPreview {
         simulation.omegay = launch.omegay;
         simulation.omegaz = launch.omegaz;
         simulation.stopped = false;
-        simulation.t = 0;
 
         let points = [];
-        let stepCount = 0;
-        let sampleCount = 0;
         let maxSteps = 25000;
         let stepTime = 0.001;
-        let sampleEveryNSteps = 16;
 
-        while (simulation.stopped === false && stepCount < maxSteps) {
+        for (let step = 1; step <= maxSteps; step += 1) {
+            if (simulation.stopped == true) {
+                break;
+            }
+
             simulation.update(stepTime);
-            stepCount = stepCount + 1;
-            sampleCount = sampleCount + 1;
-
-            if (sampleCount % sampleEveryNSteps !== 0) {
-                continue;
-            }
-
             let ballGroundY = getHeight(simulation.x, simulation.z);
-            let surfaceY = ballGroundY + VISUAL_RADIUS;
-            
-            let isAirborne = false;
-            if (simulation.y > ballGroundY + simulation.R + 0.015) {
-                isAirborne = true;
-            }
-
-            let visualY = 0;
-            if (isAirborne === true) {
-                visualY = simulation.y + VISUAL_OFFSET;
-            } else {
-                visualY = surfaceY;
-            }
-
+            let visualY = ballGroundY + VISUAL_RADIUS;
+            visualY = simulation.y + VISUAL_OFFSET;
             points.push(new THREE.Vector3(simulation.x, visualY, simulation.z));
         }
 

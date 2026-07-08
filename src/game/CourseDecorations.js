@@ -120,7 +120,7 @@ export class CourseDecorations {
     }
 
     positionForStroke(ballX, ballZ, aimYawRad, groundY, atTee = false) {
-        this.strokeDir.set(0, 0, Math.cos(aimYawRad));
+        this.strokeDir.set(Math.sin(aimYawRad), 0, Math.cos(aimYawRad));
 
         let sideX = this.strokeDir.z;
         let sideZ = -this.strokeDir.x;

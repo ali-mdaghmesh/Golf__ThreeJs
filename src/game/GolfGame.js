@@ -147,9 +147,6 @@ export class GolfGame {
             (px, pz) => this.course.getHeightAt(px, pz),
         );
 
-        if (this.cameraMode === 'orbit') {
-            this.applyOrbitAimCamera(this.getBallVisualPos(groundY), groundY, params);
-        }
     }
 
     applyOrbitAimCamera(ballPos, groundY, params) {
@@ -218,14 +215,16 @@ export class GolfGame {
     }
 
     beginCharge() {
-        if (this.inCup || !this.physics.stopped || this.phase === PHASE.SWINGING) return;
+        if (this.inCup || !this.physics.stopped || this.phase == PHASE.SWINGING)
+             return;
         this.phase = PHASE.CHARGING;
         this.swingPull = 0;
         this.updateAimPreview();
     }
 
     releaseCharge() {
-        if (this.phase !== PHASE.CHARGING) return;
+        if (this.phase != PHASE.CHARGING)
+             return;
         this.phase = PHASE.SWINGING;
         this.swingTimer = SWING_DURATION;
         this.trajectory.hide();
@@ -302,11 +301,14 @@ export class GolfGame {
     }
 
     checkCupEntry(groundY) {
-        if (this.inCup) return;
+        if (this.inCup)
+             return;
         const dx = this.physics.x - this.holePosition.x;
         const dz = this.physics.z - this.holePosition.z;
-        if (Math.sqrt(dx * dx + dz * dz) >= CUP_RADIUS) return;
-        if (!this.isBallOnGround(groundY)) return;
+        if (Math.sqrt(dx * dx + dz * dz) >= CUP_RADIUS)
+             return;
+        if (!this.isBallOnGround(groundY))
+             return;
         this.sinkInCup();
     }
 
@@ -383,7 +385,8 @@ export class GolfGame {
     }
 
     sinkInCup() {
-        if (this.inCup) return;
+        if (this.inCup)
+             return;
         this.inCup = true;
         this.phase = PHASE.IDLE;
         this.trajectory.hide();

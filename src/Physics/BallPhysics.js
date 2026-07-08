@@ -3,6 +3,7 @@ import { GroundMaterial } from './GroundMaterial.js';
 const STOP_SPEED = 0.08;
 const STOP_SPIN = 2.0;
 const GROUND_TORQUE_GAIN = 20;
+const GROUND_EPS = 0.002;
 const FIXED_DT = 0.001;
 const MAX_SUBSTEPS = 12;
 
@@ -18,13 +19,15 @@ export class BallPhysics {
 
         this.setDimpled(true);
 
-        this.ground = new GroundMaterial(); 
+        this.ground = new GroundMaterial();
         this.getGroundHeight = null;
+        this.getZoneAt = null;
         this.groundType = 'shortGrass';
 
         this.resetState();
         this._accumulator = 0;
         this.stopped = true;
+        this.bounceCount = 0;
     }
 
     setDimpled(dimpled) {
@@ -45,10 +48,10 @@ export class BallPhysics {
         this.omegay = 0;
         this.omegaz = 0;
         this.t = 0;
+        this.bounceCount = 0;
         this.stopped = true;
         this._accumulator = 0;
     }
-
 
     shoot({
         v0 = 100,
@@ -64,9 +67,9 @@ export class BallPhysics {
         vz: vzOverride,
     } = {}) {
         const theta = (thetaDeg * Math.PI) / 180;
-        const vx = vxOverride;
-        const vy = vyOverride;
-        const vz = vzOverride;
+        const vx = vxOverride ?? v0 * Math.cos(theta);
+        const vy = vyOverride ?? v0 * Math.sin(theta);
+        const vz = vzOverride ?? vz0;
 
         this.x = startX;
         this.z = startZ;
@@ -80,12 +83,14 @@ export class BallPhysics {
         this.omegay = omegay;
         this.omegaz = omegaz;
         this.t = 0;
+        this.bounceCount = 0;
         this.stopped = false;
         this._accumulator = 0;
     }
 
-    setGroundCallbacks(getHeight) {
+    setGroundCallbacks(getHeight, getZone) {
         this.getGroundHeight = getHeight;
+        this.getZoneAt = getZone;
     }
 
     _groundY(x, z) {
@@ -93,22 +98,21 @@ export class BallPhysics {
     }
 
     _applyZoneFriction() {
-    if (this.groundType === 'sand') {
-        this.ground.setBunker();
-    } else if (this.groundType === 'tallGrass') {
-        this.ground.setRough();
-    } else {
-        this.ground.setGreen();
+        if (this.groundType === 'sand') {
+            this.ground.setBunker();
+        } else if (this.groundType === 'tallGrass') {
+            this.ground.setRough();
+        } else {
+            this.ground.setGreen();
+        }
     }
-}
 
     setGroundType(type) {
-    this.groundType = type;
-}
+        this.groundType = type;
+    }
 
     update(frameDt) {
-        if (this.stopped) 
-            return;
+        if (this.stopped) return;
 
         this._accumulator += Math.min(frameDt, 0.05);
         let steps = 0;
@@ -122,11 +126,8 @@ export class BallPhysics {
 
     _step(dt) {
         let forces = this._calculateForces();
-
         this._updateMotion(forces, dt);
-
         this._handleGroundCollision(dt);
-
         this._checkIfStopped();
     }
 
@@ -160,19 +161,20 @@ export class BallPhysics {
         let torque_x = 0;
         let torque_y = 0;
         let torque_z = 0;
-        
+
         const gy = this._groundY(this.x, this.z);
         const contactY = gy + R;
         const penetrating = this.y < contactY - 0.0001;
-        const onGround = penetrating || (this.y <= contactY + 0.002 && this.vy <= 0.08);
+        const onGround = penetrating || (this.y <= contactY + GROUND_EPS && this.vy <= 0.08);
 
         if (onGround || penetrating) {
             this._applyZoneFriction();
             let N = m * g;
             const vHoriz = Math.hypot(this.vx, this.vz);
+            const vSlip = Math.hypot(this.vx + this.omegaz * R, this.vz - this.omegax * R);
             if (vHoriz > 0.01) {
-                const F_fric_mag = (Math.hypot(this.vx + this.omegaz * R, this.vz - this.omegax * R) > 0.5) 
-                    ? this.ground.mu_sliding * N 
+                const F_fric_mag = (vSlip > 0.5)
+                    ? this.ground.mu_sliding * N
                     : this.ground.mu_rolling * N;
                 F_fric_x = -F_fric_mag * (this.vx / vHoriz);
                 F_fric_z = -F_fric_mag * (this.vz / vHoriz);
@@ -212,20 +214,29 @@ export class BallPhysics {
 
         if (this.y < floor && this.vy < 0) {
             this.y = floor;
-            this.vy = -this.ground.e * this.vy;
+            const vyBefore = this.vy;
+            this.vy = -this.ground.e * vyBefore;
 
+            const deltaVy = this.vy - vyBefore;
             const muImpact = this.ground.mu_impact;
-            const sgnVx = Math.sign(this.vx);
-            const sgnVz = Math.sign(this.vz);
 
-            this.vx += sgnVx !== 0 ? -muImpact * this.vy * sgnVx : 0;
-            this.vz += sgnVz !== 0 ? -muImpact * this.vy * sgnVz : 0;
+            const sgnVx = Math.abs(this.vx) > 1e-6 ? Math.sign(this.vx) : 0;
+            const sgnVz = Math.abs(this.vz) > 1e-6 ? Math.sign(this.vz) : 0;
 
-            this.omegaz += (-this.vx * this.R) / this.I;
-            this.omegax += (this.vz * this.R) / this.I;
+            const deltaVx = sgnVx !== 0 ? -muImpact * deltaVy * sgnVx : 0;
+            const deltaVz = sgnVz !== 0 ? -muImpact * deltaVy * sgnVz : 0;
 
-        } else if (this.y < floor) {
+            this.vx += deltaVx;
+            this.vz += deltaVz;
+
+            this.omegaz += (-deltaVx * this.R) / this.I;
+            this.omegax += (deltaVz * this.R) / this.I;
+
+            this.bounceCount++;
+
+        } else if (this.y <= floor + GROUND_EPS) {
             this.y = floor;
+            if (this.vy < 0) this.vy = 0;
         }
     }
 
@@ -234,8 +245,8 @@ export class BallPhysics {
         const floor = gy + this.R;
         const speed = Math.hypot(this.vx, this.vy, this.vz);
         const spin = Math.hypot(this.omegax, this.omegay, this.omegaz);
-        
-        if (this.y <= floor + 0.001 && speed < STOP_SPEED && spin < STOP_SPIN) {
+
+        if (this.y <= floor + GROUND_EPS && speed < STOP_SPEED && spin < STOP_SPIN) {
             this.vx = this.vy = this.vz = 0;
             this.omegax = this.omegay = this.omegaz = 0;
             this.y = floor;
@@ -258,5 +269,4 @@ export class BallPhysics {
     get speed() {
         return Math.hypot(this.vx, this.vy, this.vz);
     }
-
 }
